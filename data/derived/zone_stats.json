@@ -1,0 +1,19 @@
+{
+  "source": "공공데이터포털 15164156 한국체육산업개발주식회사_주차장 혼잡도 정보_20260812 (699건, 2025-02-12~2026-08-12, 92일 중 주말 69일)",
+  "quality_note": "등록시간 699건 모두 분·초 자리에 등록일의 월·일이 들어가 있음(예: 2025-12-27 → 17:12:27). 시(hour)만 유효.",
+  "full_days": 62,
+  "zones": {
+    "P1A": {"records": 65, "full": 18, "congested": 20, "full_hour_median": 15, "first_full_days": 8, "near": "K-아트홀", "spaces_group": "P1 562"},
+    "P1B": {"records": 75, "full": 21, "congested": 23, "full_hour_median": 14, "first_full_days": 13, "near": "K-아트홀", "spaces_group": "P1 562"},
+    "P2":  {"records": 81, "full": 26, "congested": 22, "full_hour_median": 15, "first_full_days": 14, "near": "올림픽홀", "spaces": 320},
+    "P4":  {"records": 76, "full": 31, "congested": 29, "full_hour_median": 13, "first_full_days": 28, "near": "올림픽수영장", "spaces": 117},
+    "P5":  {"records": 75, "full": 32, "congested": 30, "full_hour_median": 13, "first_full_days": 26, "near": "KSPO DOME", "spaces": 176},
+    "P6":  {"records": 82, "full": 35, "congested": 29, "full_hour_median": 13, "first_full_days": 31, "near": "티켓링크 라이브 아레나", "spaces": 167},
+    "P7":  {"records": 42, "full": 17, "congested": 8,  "full_hour_median": 13, "first_full_days": 13, "near": "우리금융아트홀", "spaces": 137},
+    "P8":  {"records": 61, "full": 25, "congested": 24, "full_hour_median": 14, "first_full_days": 18},
+    "P9":  {"records": 50, "full": 19, "congested": 18, "full_hour_median": 14, "first_full_days": 15},
+    "P10": {"records": 32, "full": 12, "congested": 12, "full_hour_median": 15, "first_full_days": 8},
+    "P11": {"records": 60, "full": 27, "congested": 24, "full_hour_median": 14, "first_full_days": 21, "near": "올림픽테니스경기장", "spaces": 190}
+  },
+  "full_records_by_hour": {"0": 7, "9": 6, "10": 17, "11": 19, "12": 12, "13": 59, "14": 53, "15": 51, "16": 27, "17": 10, "20": 2}
+}

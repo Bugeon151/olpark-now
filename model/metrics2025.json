@@ -1,0 +1,148 @@
+{
+ "info": {
+  "days_valid": 240,
+  "event_days_valid": 95,
+  "peak_occ": 3563,
+  "peak_day": "2025-04-06",
+  "days_ge90": 38,
+  "days_ge70": 149,
+  "arrivals_total_all": 1975475,
+  "coverage_note": "month-end days, Aug-Sep (23% sampled), Nov/Dec 7+ excluded"
+ },
+ "month_cv": {
+  "n": 9360,
+  "n_event_evening": 2185,
+  "mae_all": {
+   "profile": 337.7,
+   "persist": 286.2,
+   "seasonal_naive": 240.4,
+   "nowcast": 88.4,
+   "nowcast_q80": 99.3,
+   "pre_event_gbm": 212.8
+  },
+  "mae_event_evening": {
+   "profile": 766.1,
+   "persist": 388.6,
+   "seasonal_naive": 429.1,
+   "nowcast": 162.1,
+   "nowcast_q80": 177.1,
+   "pre_event_gbm": 380.6
+  },
+  "mape_event_evening": {
+   "profile": 47.2,
+   "persist": 56.2,
+   "seasonal_naive": 36.6,
+   "nowcast": 15.2,
+   "nowcast_q80": 20.1,
+   "pre_event_gbm": 33.8
+  },
+  "busy70_persist": {
+   "actual": 1726,
+   "recall": 0.603,
+   "precision": 0.578
+  },
+  "busy70_nowcast": {
+   "actual": 1726,
+   "recall": 0.849,
+   "precision": 0.834
+  },
+  "busy70_nowcast_q80": {
+   "actual": 1726,
+   "recall": 0.91,
+   "precision": 0.765
+  },
+  "full90_persist": {
+   "actual": 574,
+   "recall": 0.632,
+   "precision": 0.647
+  },
+  "full90_nowcast": {
+   "actual": 574,
+   "recall": 0.772,
+   "precision": 0.834
+  },
+  "full90_nowcast_q80": {
+   "actual": 574,
+   "recall": 0.847,
+   "precision": 0.779
+  },
+  "improve_ci95_vs_profile": [
+   526.4,
+   604.3,
+   682.1
+  ],
+  "improve_ci95_vs_persist": [
+   195.5,
+   226.6,
+   256.8
+  ]
+ },
+ "holdout_q4": {
+  "n": 1638,
+  "n_event_evening": 368,
+  "mae_all": {
+   "profile": 373.8,
+   "persist": 304.6,
+   "seasonal_naive": 340.9,
+   "nowcast": 95.0,
+   "nowcast_q80": 103.2,
+   "pre_event_gbm": 297.4
+  },
+  "mae_event_evening": {
+   "profile": 873.9,
+   "persist": 429.9,
+   "seasonal_naive": 634.3,
+   "nowcast": 179.0,
+   "nowcast_q80": 191.5,
+   "pre_event_gbm": 531.4
+  },
+  "mape_event_evening": {
+   "profile": 47.9,
+   "persist": 54.8,
+   "seasonal_naive": 47.5,
+   "nowcast": 14.5,
+   "nowcast_q80": 18.8,
+   "pre_event_gbm": 33.7
+  },
+  "busy70_persist": {
+   "actual": 360,
+   "recall": 0.631,
+   "precision": 0.605
+  },
+  "busy70_nowcast": {
+   "actual": 360,
+   "recall": 0.792,
+   "precision": 0.905
+  },
+  "busy70_nowcast_q80": {
+   "actual": 360,
+   "recall": 0.894,
+   "precision": 0.852
+  },
+  "full90_persist": {
+   "actual": 179,
+   "recall": 0.709,
+   "precision": 0.743
+  },
+  "full90_nowcast": {
+   "actual": 179,
+   "recall": 0.821,
+   "precision": 0.925
+  },
+  "full90_nowcast_q80": {
+   "actual": 179,
+   "recall": 0.894,
+   "precision": 0.914
+  },
+  "improve_ci95_vs_profile": [
+   473.5,
+   697.9,
+   917.2
+  ],
+  "improve_ci95_vs_persist": [
+   184.4,
+   251.8,
+   323.3
+  ]
+ }
+}

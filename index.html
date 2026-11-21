@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>올팍 나우 — 올림픽공원 공연일 주차·귀가 플래너</title>
+<style>
+/* VOICE 공공 안내판처럼 차분하고 명료하게 / IDEA 공원 입구 주차 안내 전광판 / PICTURE 시간대별 이용률 곡선
+   COLOUR 흰 바탕·잉크, 데이터 블루 한 가지, 경보는 상태색+아이콘+글자 / TYPE Pretendard 계열 시스템 산세리프
+   LAYOUT 결론(지표)→그래프→행동 안내 순, 600px 이하 한 줄 배치 */
+:root{color-scheme:light;--bg:#f4f3ef;--s1:#fcfcfb;--line:#e4e2dc;--t1:#0b0b0b;--t2:#52514e;--t3:#7a7974;--s-1:#2a78d6;--s-2:#eb6834;--band:#cde2fb;--warn:#fab219;--crit:#d03b3b;--good:#0ca30c}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme=light])){color-scheme:dark;--bg:#111110;--s1:#1a1a19;--line:#2e2d2a;--t1:#f0efec;--t2:#c3c2b7;--t3:#9a998f;--s-1:#3987e5;--s-2:#d95926;--band:#1c3a5f}}
+:root[data-theme=dark]{color-scheme:dark;--bg:#111110;--s1:#1a1a19;--line:#2e2d2a;--t1:#f0efec;--t2:#c3c2b7;--t3:#9a998f;--s-1:#3987e5;--s-2:#d95926;--band:#1c3a5f}
+*{box-sizing:border-box;min-width:0}body{margin:0;font:16px/1.55 -apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:var(--bg);color:var(--t1);overflow-x:clip}
+header,nav,main,footer{max-width:1000px;margin:auto;padding-left:max(4vw,16px);padding-right:max(4vw,16px)}
+header{padding-top:26px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+h1{font-size:clamp(26px,4vw,34px);margin:0 0 2px;letter-spacing:-.5px;line-height:1.1}h1 b{color:var(--s-1)}
+.sub{color:var(--t2);margin:0;font-size:15px}
+.lang{border:1px solid var(--line);background:var(--s1);color:var(--t1);border-radius:999px;padding:8px 14px;font:inherit;font-size:14px;cursor:pointer;min-height:40px}
+nav{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
+nav button{border:1px solid var(--line);background:var(--s1);color:var(--t1);padding:9px 14px;border-radius:999px;font:inherit;font-size:15px;cursor:pointer;min-height:44px}
+nav button[aria-selected=true]{background:var(--t1);color:var(--s1);border-color:var(--t1)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--s-1);outline-offset:2px}
+main{padding-top:14px;padding-bottom:30px}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+select{font:inherit;font-size:16px;padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--s1);color:var(--t1);max-width:100%;min-height:44px}
+input[type=range]{flex:1;min-width:160px;min-height:44px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:10px}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi .l{color:var(--t2);font-size:14px}.kpi .v{font-size:clamp(22px,3vw,26px);font-weight:700;letter-spacing:-.5px;white-space:nowrap}.kpi .n{color:var(--t3);font-size:13px}
+.tag{display:inline-block;font-size:13px;border-radius:6px;padding:2px 8px;border:1px solid var(--line);color:var(--t2);margin:2px 4px 2px 0}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;vertical-align:middle}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--t2);margin:6px 0}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.fig{position:relative;height:270px}.fig svg{position:absolute;inset:0;width:100%;height:100%}
+svg text{fill:var(--t3);font-size:11px}
+.tip{position:absolute;pointer-events:none;background:var(--t1);color:var(--s1);font-size:13px;padding:6px 8px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-110%);display:none;z-index:5}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--t2);font-weight:600}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto}
+.muted{color:var(--t3);font-size:14px}
+.rec{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--line)}.rec:last-child{border:0}
+.rec .ic{flex:none;width:28px;height:28px;border-radius:8px;background:var(--bg);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--t2)}
+.lv{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-weight:600}
+.hide{display:none}
+footer{padding-bottom:30px;color:var(--t3);font-size:13px}
+a{color:var(--s-1)}
+@media(max-width:600px){.card{padding:14px}.fig{height:230px}table{font-size:13px}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>올팍 <b>나우</b></h1><p class="sub" data-i="sub"></p></div>
+  <button class="lang" id="lang" aria-label="Language">English</button>
+</header>
+<nav role="tablist" id="tabs"></nav>
+<main>
+<div class="card" id="dcard">
+  <div class="row"><label for="date" data-i="date"></label><select id="date"></select><span class="muted" id="dtype"></span></div>
+  <div id="sess" style="margin-top:8px"></div>
+</div>
+<section id="plan" class="hide">
+  <div class="card"><div class="kpis" id="kpis"></div></div>
+  <div class="card">
+    <strong data-i="chartT"></strong> <span class="muted" data-i="chartS"></span>
+    <div class="legend" id="lg1"></div>
+    <div class="fig" id="c1"></div>
+  </div>
+  <div class="card" id="recs"></div>
+</section>
+<section id="ops">
+  <div class="card"><div class="kpis" id="okpis"></div></div>
+  <div class="card"><strong data-i="chartT"></strong> <span class="muted" data-i="chartS"></span><div class="legend" id="lg0"></div><div class="fig" id="c0"></div></div>
+  <div class="card"><strong data-i="opsT"></strong><p class="muted" data-i="opsS"></p><div class="scroll"><table id="opsTbl"></table></div></div>
+  <div class="card"><strong data-i="zoneT"></strong><p class="muted" data-i="zoneS"></p><div class="scroll"><table id="zoneTbl"></table></div></div>
+</section>
+<section id="replay" class="hide">
+  <div class="card">
+    <div class="row"><label for="rd" data-i="rdate"></label><select id="rd"></select>
+      <label for="h0"><span data-i="now"></span> <b id="h0v"></b></label><input id="h0" type="range" min="8" max="20" value="15"></div>
+    <p class="muted" data-i="rnote" style="margin:8px 0 0"></p>
+  </div>
+  <div class="card">
+    <div class="legend" id="lg2"></div>
+    <div class="fig" id="c2"></div>
+    <div class="kpis" id="rk" style="margin-top:10px"></div>
+  </div>
+</section>
+<section id="valid" class="hide">
+  <div class="card"><strong data-i="accT"></strong><div class="scroll"><table id="mt"></table></div><p class="muted" id="accN"></p></div>
+  <div class="card"><strong data-i="qT"></strong><ul class="muted" id="qual"></ul></div>
+  <div class="card"><strong data-i="dataT"></strong><div class="scroll"><table id="dt"></table></div></div>
+  <div class="card"><strong data-i="limT"></strong><ul class="muted" id="lim"></ul></div>
+</section>
+</main>
+<footer data-i="foot"></footer>
+<div class="tip" id="tip"></div>
+<script>
+{
+const M = {"cap":2200,"profile":{"weekday":[55.0,54.0,54.0,55.0,64.0,149.0,514.0,487.0,489.0,828.0,932.0,850.0,634.0,634.0,710.0,694.0,600.0,527.0,528.0,582.0,592.0,411.0,96.0,64.0],"weekend":[54.0,50.0,46.0,46.0,47.0,50.0,94.0,138.0,243.0,534.0,726.0,714.0,658.0,628.0,767.0,856.0,860.0,732.0,548.0,510.0,465.0,262.0,84.0,48.0]},"dep_profile":{"weekday":[10.0,6.0,5.0,5.0,5.0,23.0,127.0,421.0,560.0,288.0,453.0,514.0,524.0,355.0,326.0,418.0,441.0,469.0,465.0,364.0,392.0,426.0,260.0,25.0],"weekend":[12.0,13.0,8.0,3.0,4.0,9.0,37.0,82.0,154.0,236.0,394.0,468.0,530.0,486.0,380.0,453.0,514.0,596.0,324.0,150.0,249.0,322.0,176.0,22.0]},"dome_excess_scenarios_rel_start_-6_to_+5":{"low":[0.0,0.0,0.0,10,88,166,167,205,239,401,275,232,289,24,0.0,0.0],"mid":[114,187,307,410,469,444,481,579,773,877,855,879,844,422,67,0.0],"high":[357,562,651,702,735,944,1031,1254,1470,1850,1718,1675,1748,1104,277,87]},"dome_peaks_by_day":{"2024-07-12":384,"2024-07-13":306,"2024-07-14":246,"2024-07-20":1282,"2024-07-21":1374,"2024-07-27":274,"2024-07-28":310},"dep_peak_hours_after_start":{"2024-07-12":3,"2024-07-13":3,"2024-07-14":4,"2024-07-20":3,"2024-07-21":3,"2024-07-27":2,"2024-07-28":3},"replay":{"2025-11-01":{"actual":[102.0,115.0,115.0,118.0,115.0,128.0,183.0,335.0,679.0,1217.0,1640.0,1959.0,2388.0,2753.0,3155.0,3229.0,3210.0,2839.0,2238.0,2176.0,2268.0,1254.0,336.0,203.0],"profile":[189.0,188.0,183.0,178.0,169.0,163.0,193.0,238.0,314.0,507.0,665.0,747.0,768.0,851.0,990.0,1012.0,925.0,754.0,537.0,443.0,393.0,318.0,223.0,196.0],"events":[["우리금융아트홀",14],["올림픽홀",18],["KSPO DOME",18]],"nowcast":{"8":{"9":1154,"10":1413,"11":1530},"9":{"10":1675,"11":1932,"12":2052},"10":{"11":2006,"12":2192,"13":2400},"11":{"12":2333,"13":2594,"14":2857},"12":{"13":2806,"14":3119,"15":3261},"13":{"14":3201,"15":3385,"16":3451},"14":{"15":3377,"16":3375,"17":3017},"15":{"16":3188,"17":2851,"18":1857},"16":{"17":2845,"18":2063,"19":1919},"17":{"18":1897,"19":1700,"20":1153},"18":{"19":1785,"20":1156,"21":643},"19":{"20":1601,"21":807,"22":440},"20":{"21":1003,"22":531,"23":461}}},"2025-11-02":{"actual":[193.0,194.0,191.0,193.0,199.0,257.0,376.0,579.0,949.0,1471.0,1978.0,2466.0,2948.0,3015.0,2930.0,3181.0,3100.0,2552.0,2273.0,1250.0,761.0,323.0,223.0,204.0],"profile":[189.0,188.0,183.0,178.0,169.0,163.0,193.0,238.0,314.0,507.0,665.0,747.0,768.0,851.0,990.0,1012.0,925.0,754.0,537.0,443.0,393.0,318.0,223.0,196.0],"events":[["올림픽홀",17],["KSPO DOME",16]],"nowcast":{"8":{"9":1361,"10":1557,"11":1617},"9":{"10":1880,"11":2044,"12":2142},"10":{"11":2382,"12":2512,"13":2927},"11":{"12":2736,"13":3138,"14":3401},"12":{"13":3228,"14":3523,"15":3660},"13":{"14":3196,"15":3410,"16":3282},"14":{"15":3105,"16":2995,"17":2640},"15":{"16":3122,"17":2825,"18":2336},"16":{"17":2624,"18":2030,"19":1785},"17":{"18":1944,"19":1595,"20":959},"18":{"19":1526,"20":965,"21":681},"19":{"20":569,"21":402,"22":251},"20":{"21":408,"22":275,"23":213}}}},"metrics":{"profile":{"mae_all":104.9,"mae_event_evening":332.5},"persist":{"mae_all":193.7,"mae_event_evening":301.4},"gbm":{"mae_all":57.9,"mae_event_evening":147.1},"gbm_q80":{"mae_all":68.0,"mae_event_evening":179.2}},"venues":{"KSPO DOME":{"seats":15000,"lot":"P5","lot_spaces":176},"핸드볼경기장":{"seats":5003,"lot":"P6","lot_spaces":167},"올림픽홀":{"seats":3152,"lot":"P2","lot_spaces":320},"우리금융아트홀":{"seats":1184,"lot":"P7","lot_spaces":137},"뮤즈라이브":{"seats":237,"lot":null,"lot_spaces":null}},"sessions_upcoming":[["2026-11-22","KSPO DOME",17,"2026-27 로이킴 LIVE TOUR R:O:Y"],["2026-11-27","KSPO DOME",19,"2026 조용필 & 위대한탄생 콘서트"],["2026-11-27","올림픽홀",20,"2026 다이나믹 듀오 단독 콘서트"],["2026-11-28","KSPO DOME",18,"2026 조용필 & 위대한탄생 콘서트"],["2026-11-28","올림픽홀",18,"2026 다이나믹 듀오 단독 콘서트"],["2026-11-28","우리금융아트홀",19,"최현우 30주년 기념 공연 LEGACY"],["2026-11-29","KSPO DOME",17,"2026 조용필 & 위대한탄생 콘서트"],["2026-11-29","올림픽홀",17,"2026 다이나믹 듀오 단독 콘서트"],["2026-11-29","우리금융아트홀",14,"최현우 30주년 기념 공연 LEGACY"],["2026-12-04","KSPO DOME",19,"2026 이승철 40주년 콘서트 THE VOICE"],["2026-12-05","KSPO DOME",16,"2026 이승철 40주년 콘서트 THE VOICE"],["2026-12-05","올림픽홀",18,"2026 비(RAIN) CONCERT THE SMOKE"],["2026-12-05","우리금융아트홀",19,"최현우 30주년 기념 공연 LEGACY"],["2026-12-06","KSPO DOME",16,"2026 이승철 40주년 콘서트 THE VOICE"],["2026-12-06","올림픽홀",17,"2026 비(RAIN) CONCERT THE SMOKE"],["2026-12-06","우리금융아트홀",14,"최현우 30주년 기념 공연 LEGACY"],["2026-12-11","올림픽홀",19,"2026 박지현 팬콘서트 멤버쉽 시즌2"],["2026-12-12","KSPO DOME",18,"2026 DAVICHI CONCERT IN OUR SCENES"],["2026-12-12","올림픽홀",17,"2026 박지현 팬콘서트 멤버쉽 시즌2"],["2026-12-12","우리금융아트홀",19,"최현우 30주년 기념 공연 LEGACY"],["2026-12-13","KSPO DOME",17,"2026 DAVICHI CONCERT IN OUR SCENES"],["2026-12-13","올림픽홀",16,"2026 박지현 팬콘서트 멤버쉽 시즌2"],["2026-12-13","우리금융아트홀",14,"최현우 30주년 기념 공연 LEGACY"],["2026-12-18","KSPO DOME",19,"2026 DAY6 Special Concert The Present"],["2026-12-18","올림픽홀",20,"자우림 단독 콘서트 MIDNIGHT EXPRESS"],["2026-12-19","KSPO DOME",18,"2026 DAY6 Special Concert The Present"],["2026-12-19","올림픽홀",18,"자우림 단독 콘서트 MIDNIGHT EXPRESS"],["2026-12-19","우리금융아트홀",19,"최현우 30주년 기념 공연 LEGACY"],["2026-12-20","KSPO DOME",17,"2026 DAY6 Special Concert The Present"],["2026-12-20","올림픽홀",17,"자우림 단독 콘서트 MIDNIGHT EXPRESS"],["2026-12-20","우리금융아트홀",14,"최현우 30주년 기념 공연 LEGACY"],["2026-12-24","KSPO DOME",19,"2026 THE BOYZ CONCERT ZENERATION III"],["2026-12-24","올림픽홀",20,"2026 박진영 콘서트 WET"],["2026-12-25","KSPO DOME",18,"2026 THE BOYZ CONCERT ZENERATION III"],["2026-12-25","올림픽홀",17,"2026 박진영 콘서트 WET"],["2026-12-25","핸드볼경기장",18,"2026 CRUSH CONCERT CRUSH HOUR"],["2026-12-26","KSPO DOME",17,"2026 THE BOYZ CONCERT ZENERATION III"],["2026-12-26","올림픽홀",18,"2026 박진영 콘서트 WET"],["2026-12-26","핸드볼경기장",18,"2026 CRUSH CONCERT CRUSH HOUR"],["2026-12-26","우리금융아트홀",19,"최현우 30주년 기념 공연 LEGACY"],["2026-12-27","KSPO DOME",16,"2026 THE BOYZ CONCERT ZENERATION III"],["2026-12-27","우리금융아트홀",14,"최현우 30주년 기념 공연 LEGACY"],["2026-12-31","KSPO DOME",21,"2026 성시경 연말 콘서트"],["2027-01-01","KSPO DOME",19,"2026 성시경 연말 콘서트"],["2027-01-02","KSPO DOME",18,"2026 성시경 연말 콘서트"],["2027-01-03","KSPO DOME",18,"2026 성시경 연말 콘서트"],["2027-01-03","우리금융아트홀",14,"최현우 30주년 기념 공연 LEGACY"]],"m2024":{"metrics":{"profile":{"mae_all":104.9,"mae_event_evening":332.5},"persist":{"mae_all":193.7,"mae_event_evening":301.4},"gbm":{"mae_all":57.9,"mae_event_evening":147.1},"gbm_q80":{"mae_all":68.0,"mae_event_evening":179.2}},"replay":{"2024-07-20":{"actual":[134.0,137.0,137.0,136.0,136.0,143.0,191.0,220.0,359.0,671.0,914.0,968.0,913.0,888.0,1134.0,1355.0,1661.0,2013.0,1785.0,1517.0,1456.0,759.0,136.0,61.0],"profile":[54.0,50.0,46.0,46.0,47.0,50.0,94.0,138.0,243.0,534.0,726.0,714.0,658.0,628.0,767.0,856.0,860.0,732.0,548.0,510.0,465.0,262.0,84.0,48.0],"nowcast":{"8":{"9":744,"10":949,"11":972},"9":{"10":878,"11":875,"12":838},"10":{"11":1031,"12":992,"13":937},"11":{"12":958,"13":918,"14":1013},"12":{"13":889,"14":1002,"15":1164},"13":{"14":1045,"15":1159,"16":1166},"14":{"15":1163,"16":1252,"17":1292},"15":{"16":1632,"17":1774,"18":1603},"16":{"17":1851,"18":1577,"19":1272},"17":{"18":1887,"19":1577,"20":1364},"18":{"19":1307,"20":1088,"21":837},"19":{"20":1063,"21":791,"22":419},"20":{"21":701,"22":392,"23":324}},"risk80":{"8":{"9":743,"10":911,"11":954},"9":{"10":855,"11":861,"12":847},"10":{"11":993,"12":970,"13":935},"11":{"12":939,"13":910,"14":1110},"12":{"13":851,"14":1007,"15":1160},"13":{"14":1055,"15":1219,"16":1224},"14":{"15":1442,"16":1460,"17":1496},"15":{"16":1817,"17":1856,"18":1602},"16":{"17":2074,"18":1867,"19":1740},"17":{"18":2127,"19":2020,"20":1812},"18":{"19":1572,"20":1461,"21":1395},"19":{"20":1300,"21":1164,"22":935},"20":{"21":1089,"22":867,"23":868}}},"2024-07-21":{"actual":[45.0,45.0,44.0,44.0,47.0,51.0,81.0,92.0,176.0,456.0,787.0,856.0,916.0,944.0,1192.0,1638.0,2105.0,2084.0,1921.0,1542.0,1045.0,460.0,222.0,158.0],"profile":[54.0,50.0,46.0,46.0,47.0,50.0,94.0,138.0,243.0,534.0,726.0,714.0,658.0,628.0,767.0,856.0,860.0,732.0,548.0,510.0,465.0,262.0,84.0,48.0],"nowcast":{"8":{"9":427,"10":628,"11":670},"9":{"10":722,"11":759,"12":689},"10":{"11":782,"12":695,"13":674},"11":{"12":784,"13":784,"14":979},"12":{"13":892,"14":1182,"15":1222},"13":{"14":1241,"15":1309,"16":1349},"14":{"15":1438,"16":1613,"17":1390},"15":{"16":1974,"17":1761,"18":1584},"16":{"17":2149,"18":1971,"19":1747},"17":{"18":2005,"19":1797,"20":1563},"18":{"19":1721,"20":1482,"21":944},"19":{"20":1167,"21":560,"22":430},"20":{"21":223,"22":117,"23":96}},"risk80":{"8":{"9":553,"10":658,"11":685},"9":{"10":741,"11":785,"12":751},"10":{"11":835,"12":773,"13":754},"11":{"12":789,"13":766,"14":992},"12":{"13":881,"14":1275,"15":1306},"13":{"14":1294,"15":1370,"16":1390},"14":{"15":1578,"16":1626,"17":1478},"15":{"16":1936,"17":1824,"18":1729},"16":{"17":2187,"18":2122,"19":1958},"17":{"18":2024,"19":1913,"20":1854},"18":{"19":1805,"20":1752,"21":1540},"19":{"20":1442,"21":1211,"22":1067},"20":{"21":697,"22":547,"23":545}}}},"profile":{"weekday":[55.0,54.0,54.0,55.0,64.0,149.0,514.0,487.0,489.0,828.0,932.0,850.0,634.0,634.0,710.0,694.0,600.0,527.0,528.0,582.0,592.0,411.0,96.0,64.0],"weekend":[54.0,50.0,46.0,46.0,47.0,50.0,94.0,138.0,243.0,534.0,726.0,714.0,658.0,628.0,767.0,856.0,860.0,732.0,548.0,510.0,465.0,262.0,84.0,48.0]},"dome_excess_scenarios_rel_start_-6_to_+5":{"low":[0.0,0.0,0.0,54,0.0,50,5,58,246,183,0.0,0.0],"mid":[40,190,182,186,310,308,219,178,260,0.0,0.0,0.0],"high":[142,258,316,425,782,1245,1352,1374,1032,580,198,138]}},"source_year":2025,"profile_m":{"1":{"weekday":[192.0,198.0,193.0,192.0,184.0,195.0,317.0,419.0,586.0,846.0,985.0,1008.0,956.0,1019.0,1057.0,1034.0,918.0,801.0,590.0,511.0,465.0,329.0,204.0,188.0],"friday":[213.0,216.0,215.0,212.0,206.0,260.0,583.0,675.0,794.0,1276.0,1440.0,1419.0,1240.0,1263.0,1319.0,1322.0,1229.0,1135.0,972.0,943.0,862.0,671.0,288.0,212.0],"weekend":[175.0,179.0,175.0,171.0,163.0,155.0,177.0,202.0,246.0,392.0,532.0,602.0,615.0,700.0,819.0,830.0,745.0,583.0,380.0,318.0,289.0,245.0,194.0,171.0]},"2":{"weekday":[201.0,207.0,200.0,195.0,189.0,256.0,639.0,698.0,782.0,1264.0,1454.0,1422.0,1191.0,1260.0,1346.0,1321.0,1161.0,1041.0,879.0,843.0,817.0,597.0,223.0,189.0],"friday":[213.0,216.0,215.0,212.0,206.0,260.0,583.0,675.0,794.0,1276.0,1440.0,1419.0,1240.0,1263.0,1319.0,1322.0,1229.0,1135.0,972.0,943.0,862.0,671.0,288.0,212.0],"weekend":[179.0,178.0,175.0,170.0,160.0,156.0,171.0,195.0,255.0,385.0,530.0,601.0,598.0,668.0,774.0,769.0,658.0,537.0,367.0,314.0,283.0,241.0,180.0,165.0]},"3":{"weekday":[206.0,206.0,202.0,200.0,196.0,265.0,647.0,724.0,810.0,1308.0,1457.0,1385.0,1136.0,1174.0,1234.0,1233.0,1144.0,1050.0,886.0,839.0,793.0,587.0,227.0,197.0],"friday":[210.0,217.0,215.0,213.0,205.0,268.0,629.0,719.0,826.0,1350.0,1518.0,1479.0,1271.0,1298.0,1356.0,1362.0,1284.0,1195.0,1035.0,1010.0,922.0,721.0,287.0,207.0],"weekend":[179.0,178.0,175.0,170.0,160.0,156.0,171.0,195.0,255.0,385.0,530.0,601.0,598.0,668.0,774.0,769.0,658.0,537.0,367.0,314.0,283.0,241.0,180.0,165.0]},"4":{"weekday":[214.0,217.0,213.0,212.0,211.0,291.0,701.0,779.0,888.0,1378.0,1534.0,1459.0,1247.0,1281.0,1348.0,1339.0,1268.0,1187.0,1018.0,959.0,884.0,666.0,266.0,209.0],"friday":[210.0,217.0,215.0,213.0,205.0,268.0,629.0,719.0,826.0,1350.0,1518.0,1479.0,1271.0,1298.0,1356.0,1362.0,1284.0,1195.0,1035.0,1010.0,922.0,721.0,287.0,207.0],"weekend":[193.0,189.0,185.0,180.0,171.0,167.0,193.0,245.0,333.0,523.0,688.0,782.0,789.0,863.0,990.0,1001.0,904.0,766.0,580.0,491.0,433.0,347.0,230.0,205.0]},"5":{"weekday":[216.0,217.0,213.0,208.0,203.0,289.0,691.0,771.0,897.0,1386.0,1528.0,1445.0,1243.0,1286.0,1328.0,1310.0,1235.0,1160.0,1004.0,989.0,922.0,700.0,292.0,227.0],"friday":[210.0,217.0,215.0,213.0,205.0,268.0,629.0,719.0,826.0,1350.0,1518.0,1479.0,1271.0,1298.0,1356.0,1362.0,1284.0,1195.0,1035.0,1010.0,922.0,721.0,287.0,207.0],"weekend":[193.0,189.0,185.0,180.0,171.0,167.0,193.0,245.0,333.0,523.0,688.0,782.0,789.0,863.0,990.0,1001.0,904.0,766.0,580.0,491.0,433.0,347.0,230.0,205.0]},"6":{"weekday":[245.0,243.0,234.0,225.0,222.0,312.0,716.0,798.0,937.0,1470.0,1596.0,1488.0,1264.0,1303.0,1342.0,1335.0,1267.0,1165.0,1011.0,967.0,925.0,690.0,292.0,232.0],"friday":[210.0,217.0,215.0,213.0,205.0,268.0,629.0,719.0,826.0,1350.0,1518.0,1479.0,1271.0,1298.0,1356.0,1362.0,1284.0,1195.0,1035.0,1010.0,922.0,721.0,287.0,207.0],"weekend":[199.0,196.0,190.0,182.0,174.0,168.0,208.0,263.0,361.0,614.0,794.0,874.0,899.0,982.0,1150.0,1188.0,1118.0,903.0,638.0,517.0,456.0,363.0,241.0,209.0]},"7":{"weekday":[263.0,262.0,255.0,250.0,247.0,338.0,746.0,825.0,951.0,1477.0,1599.0,1499.0,1254.0,1307.0,1374.0,1364.0,1227.0,1153.0,987.0,966.0,936.0,701.0,318.0,276.0],"friday":[210.0,217.0,215.0,213.0,205.0,268.0,629.0,719.0,826.0,1350.0,1518.0,1479.0,1271.0,1298.0,1356.0,1362.0,1284.0,1195.0,1035.0,1010.0,922.0,721.0,287.0,207.0],"weekend":[201.0,197.0,192.0,184.0,176.0,169.0,211.0,271.0,373.0,622.0,796.0,878.0,921.0,1012.0,1184.0,1232.0,1153.0,937.0,674.0,537.0,472.0,371.0,250.0,214.0]},"8":{"weekday":[263.0,262.0,255.0,250.0,247.0,338.0,746.0,825.0,951.0,1477.0,1599.0,1499.0,1254.0,1307.0,1374.0,1364.0,1227.0,1153.0,987.0,966.0,936.0,701.0,318.0,276.0],"friday":[215.0,218.0,217.0,214.0,208.0,261.0,587.0,682.0,804.0,1286.0,1444.0,1412.0,1247.0,1279.0,1335.0,1344.0,1243.0,1138.0,960.0,918.0,833.0,643.0,299.0,220.0],"weekend":[197.0,196.0,190.0,185.0,177.0,170.0,211.0,273.0,364.0,608.0,779.0,868.0,909.0,1004.0,1170.0,1216.0,1148.0,935.0,679.0,550.0,484.0,382.0,259.0,221.0]},"9":{"weekday":[220.0,219.0,212.0,209.0,206.0,281.0,642.0,752.0,883.0,1432.0,1580.0,1515.0,1315.0,1335.0,1388.0,1371.0,1267.0,1152.0,957.0,888.0,829.0,645.0,286.0,233.0],"friday":[214.0,216.0,215.0,213.0,208.0,261.0,577.0,664.0,788.0,1267.0,1436.0,1431.0,1256.0,1275.0,1326.0,1327.0,1248.0,1160.0,992.0,965.0,878.0,683.0,289.0,203.0],"weekend":[197.0,196.0,190.0,185.0,177.0,170.0,211.0,273.0,364.0,608.0,779.0,868.0,909.0,1004.0,1170.0,1216.0,1148.0,935.0,679.0,550.0,484.0,382.0,259.0,221.0]},"10":{"weekday":[220.0,219.0,212.0,209.0,206.0,281.0,642.0,752.0,883.0,1432.0,1580.0,1515.0,1315.0,1335.0,1388.0,1371.0,1267.0,1152.0,957.0,888.0,829.0,645.0,286.0,233.0],"friday":[213.0,216.0,215.0,212.0,206.0,260.0,583.0,675.0,794.0,1276.0,1440.0,1419.0,1240.0,1263.0,1319.0,1322.0,1229.0,1135.0,972.0,943.0,862.0,671.0,288.0,212.0],"weekend":[173.0,178.0,175.0,172.0,163.0,155.0,175.0,202.0,242.0,368.0,495.0,566.0,596.0,690.0,806.0,823.0,726.0,572.0,379.0,310.0,281.0,237.0,195.0,171.0]},"11":{"weekday":[212.0,214.0,208.0,204.0,199.0,277.0,642.0,756.0,885.0,1434.0,1586.0,1520.0,1311.0,1326.0,1377.0,1360.0,1257.0,1141.0,948.0,886.0,828.0,640.0,281.0,231.0],"friday":[213.0,216.0,215.0,212.0,206.0,260.0,583.0,675.0,794.0,1276.0,1440.0,1419.0,1240.0,1263.0,1319.0,1322.0,1229.0,1135.0,972.0,943.0,862.0,671.0,288.0,212.0],"weekend":[173.0,178.0,175.0,172.0,163.0,155.0,175.0,202.0,242.0,368.0,495.0,566.0,596.0,690.0,806.0,823.0,726.0,572.0,379.0,310.0,281.0,237.0,195.0,171.0]},"12":{"weekday":[194.0,200.0,195.0,192.0,185.0,224.0,441.0,550.0,701.0,1071.0,1218.0,1206.0,1089.0,1130.0,1171.0,1151.0,1041.0,924.0,721.0,653.0,603.0,445.0,230.0,203.0],"friday":[213.0,216.0,215.0,212.0,206.0,260.0,583.0,675.0,794.0,1276.0,1440.0,1419.0,1240.0,1263.0,1319.0,1322.0,1229.0,1135.0,972.0,943.0,862.0,671.0,288.0,212.0],"weekend":[173.0,178.0,175.0,172.0,163.0,155.0,175.0,202.0,242.0,368.0,495.0,566.0,596.0,690.0,806.0,823.0,726.0,572.0,379.0,310.0,281.0,237.0,195.0,171.0]}},"profile_m_days_window":{"1":{"weekday":[13,0],"friday":[6,3],"weekend":[8,3]},"2":{"weekday":[16,0],"friday":[6,2],"weekend":[5,3]},"3":{"weekday":[14,0],"friday":[5,1],"weekend":[5,2]},"4":{"weekday":[17,0],"friday":[5,2],"weekend":[7,3]},"5":{"weekday":[15,0],"friday":[5,3],"weekend":[7,4]},"6":{"weekday":[15,0],"friday":[5,4],"weekend":[8,4]},"7":{"weekday":[18,0],"friday":[5,5],"weekend":[7,3]},"8":{"weekday":[18,1],"friday":[5,5],"weekend":[6,2]},"9":{"weekday":[14,1],"friday":[5,5],"weekend":[6,3]},"10":{"weekday":[14,0],"friday":[6,6],"weekend":[7,3]},"11":{"weekday":[22,1],"friday":[6,5],"weekend":[7,2]},"12":{"weekday":[21,1],"friday":[6,4],"weekend":[7,2]}},"scen_from":-10,"dome_days":68,"dome_peak_excess_p10_p50_p90_max":[517,1040,1924,2638],"dep_peak_rel_counts":{"0":9,"2":15,"3":41,"4":3},"annual":{"valid_days":247,"busy_hours":613,"full_hours":193,"busy_days":149,"full_days":38},"metrics2025":{"info":{"days_valid":240,"event_days_valid":95,"peak_occ":3563,"peak_day":"2025-04-06","days_ge90":38,"days_ge70":149,"arrivals_total_all":1975475,"coverage_note":"month-end days, Aug-Sep (23% sampled), Nov/Dec 7+ excluded"},"month_cv":{"n":9360,"n_event_evening":2185,"mae_all":{"profile":337.7,"persist":286.2,"seasonal_naive":240.4,"nowcast":88.4,"nowcast_q80":99.3,"pre_event_gbm":212.8},"mae_event_evening":{"profile":766.1,"persist":388.6,"seasonal_naive":429.1,"nowcast":162.1,"nowcast_q80":177.1,"pre_event_gbm":380.6},"mape_event_evening":{"profile":47.2,"persist":56.2,"seasonal_naive":36.6,"nowcast":15.2,"nowcast_q80":20.1,"pre_event_gbm":33.8},"busy70_persist":{"actual":1726,"recall":0.603,"precision":0.578},"busy70_nowcast":{"actual":1726,"recall":0.849,"precision":0.834},"busy70_nowcast_q80":{"actual":1726,"recall":0.91,"precision":0.765},"full90_persist":{"actual":574,"recall":0.632,"precision":0.647},"full90_nowcast":{"actual":574,"recall":0.772,"precision":0.834},"full90_nowcast_q80":{"actual":574,"recall":0.847,"precision":0.779},"improve_ci95_vs_profile":[526.4,604.3,682.1],"improve_ci95_vs_persist":[195.5,226.6,256.8]},"holdout_q4":{"n":1638,"n_event_evening":368,"mae_all":{"profile":373.8,"persist":304.6,"seasonal_naive":340.9,"nowcast":95.0,"nowcast_q80":103.2,"pre_event_gbm":297.4},"mae_event_evening":{"profile":873.9,"persist":429.9,"seasonal_naive":634.3,"nowcast":179.0,"nowcast_q80":191.5,"pre_event_gbm":531.4},"mape_event_evening":{"profile":47.9,"persist":54.8,"seasonal_naive":47.5,"nowcast":14.5,"nowcast_q80":18.8,"pre_event_gbm":33.7},"busy70_persist":{"actual":360,"recall":0.631,"precision":0.605},"busy70_nowcast":{"actual":360,"recall":0.792,"precision":0.905},"busy70_nowcast_q80":{"actual":360,"recall":0.894,"precision":0.852},"full90_persist":{"actual":179,"recall":0.709,"precision":0.743},"full90_nowcast":{"actual":179,"recall":0.821,"precision":0.925},"full90_nowcast_q80":{"actual":179,"recall":0.894,"precision":0.914},"improve_ci95_vs_profile":[473.5,697.9,917.2],"improve_ci95_vs_persist":[184.4,251.8,323.3]}},"zones":{"source":"공공데이터포털 15164156 한국체육산업개발주식회사_주차장 혼잡도 정보_20260812 (699건, 2025-02-12~2026-08-12, 92일 중 주말 69일)","quality_note":"등록시간 699건 모두 분·초 자리에 등록일의 월·일이 들어가 있음(예: 2025-12-27 → 17:12:27). 시(hour)만 유효.","full_days":62,"zones":{"P1A":{"records":65,"full":18,"congested":20,"full_hour_median":15,"first_full_days":8,"near":"K-아트홀","spaces_group":"P1 562"},"P1B":{"records":75,"full":21,"congested":23,"full_hour_median":14,"first_full_days":13,"near":"K-아트홀","spaces_group":"P1 562"},"P2":{"records":81,"full":26,"congested":22,"full_hour_median":15,"first_full_days":14,"near":"올림픽홀","spaces":320},"P4":{"records":76,"full":31,"congested":29,"full_hour_median":13,"first_full_days":28,"near":"올림픽수영장","spaces":117},"P5":{"records":75,"full":32,"congested":30,"full_hour_median":13,"first_full_days":26,"near":"KSPO DOME","spaces":176},"P6":{"records":82,"full":35,"congested":29,"full_hour_median":13,"first_full_days":31,"near":"티켓링크 라이브 아레나","spaces":167},"P7":{"records":42,"full":17,"congested":8,"full_hour_median":13,"first_full_days":13,"near":"우리금융아트홀","spaces":137},"P8":{"records":61,"full":25,"congested":24,"full_hour_median":14,"first_full_days":18},"P9":{"records":50,"full":19,"congested":18,"full_hour_median":14,"first_full_days":15},"P10":{"records":32,"full":12,"congested":12,"full_hour_median":15,"first_full_days":8},"P11":{"records":60,"full":27,"congested":24,"full_hour_median":14,"first_full_days":21,"near":"올림픽테니스경기장","spaces":190}},"full_records_by_hour":{"0":7,"9":6,"10":17,"11":19,"12":12,"13":59,"14":53,"15":51,"16":27,"17":10,"20":2}},"robust":{"seasonal_naive_evening_d>=8":507.1,"gbm_evening_d>=8":155.4,"profile_evening_d>=8":338.6,"improve_vs_profile_CI95":[95.6,183.9,281.3],"improve_vs_persist_CI95":[87.9,153.1,234.9],"ablation_event_evening_MAE":{"전체 변수":147.1,"-기상(기온·강수)":146.7,"-공연 일정":168.2,"-실시간 추세(변화량·입출차)":146.3}}};
+const CAP = M.cap, T70 = .7 * CAP, T90 = .9 * CAP, HOL = new Set(['2026-12-25', '2027-01-01']);
+const $ = s => document.querySelector(s), tip = $('#tip');
+let L = 'ko';
+try { if (localStorage.getItem('olpark-lang') === 'en') L = 'en'; } catch (e) {}
+const fmtH = h => String(h).padStart(2, '0') + ':00', pct = v => Math.round(100 * v / CAP) + '%';
+const VEN = {'KSPO DOME': 'KSPO DOME', '핸드볼경기장': 'Ticketlink Live Arena', '올림픽홀': 'Olympic Hall', '우리금융아트홀': 'Woori Financial Art Hall', '뮤즈라이브': 'Muse Live'};
+const vn = v => L === 'en' ? VEN[v] || v : v;
+const S = {
+ ko: {sub: '실측 입출차 데이터로 현장 상황을 보정하는 공연일 주차 운영 의사결정 지원 시스템 — 한국체육산업개발(주) 공공데이터', tabs: ['운영 대시보드', '나우캐스트 검증', '관람객 안내', '검증·데이터'],
+  date: '방문 날짜', wk: '주말·공휴일 패턴', wd: '평일 패턴', chartT: '시간대별 예상 주차장 이용률', chartS: '(동2·남2·북2문 합산 재차대수, 기관 공개 수용 2,200대 기준 %)',
+  lg1: ['예상(중간 시나리오)', '예상 범위(2025 KSPO DOME 공연일 68일 관측 10~90%)', '공연 없는 날(2025, 같은 요일유형·인접 월 평균)'], k1: '최대 예상 이용률', k2: '최악의 경우(관측 최대치)', k3: '자가용 도착 권장', k4: '출차 몰림 예상',
+  ok5: '수용 초과 예상 대수', ok5n: '최악 시나리오 − 공개 수용 2,200대(임시 주차·대체 안내 검토)', over: '수용 초과', full: '만차', cong: '혼잡', ok: '여유', around: '전후', reach: '만차 도달', noreach: '만차 미도달', before: '이전', k3n: '혼잡(70%) 진입 1시간 전', k4n: '공연 시작 +2~3시간 (2025 KSPO DOME 공연일 68일 중 56일)',
+  recT: '맞춤 안내', r1: ['대중교통 우선', '가장 가까운 역은 5·9호선 올림픽공원역입니다(공식 주차 안내). 대형 공연 시 기관도 대중교통 이용을 권고합니다.'],
+  r2: (v, lot, sp, c, arr) => [`${v} 최근접 주차장 ${lot}${sp ? ` (${sp}면)` : ''}`, `최악의 경우 ${c != null ? fmtH(c) + '부터 혼잡' : '혼잡 없음'}이 예상되어 ${arr} 이전 도착을 권장합니다.`],
+  r3: ['먼저 차는 구역 피하기', '2025~2026년 혼잡도 기록상 주말에는 P6·P4·P5가 가장 먼저(만차 시각 중앙값 13시) 만차가 되고, P1A·P1B는 늦게(14~15시) 찹니다. 늦게 도착한다면 P1(562면)을 먼저 찾으세요.'],
+  r4: (h) => ['귀가 시간 분산', `출차는 공연 시작 2~3시간 뒤(${h} 전후)에 몰립니다. 2025년 KSPO DOME 공연일 68일 중 56일이 그랬습니다. 출구 혼잡을 줄이려면 공연 종료 전 시차 귀가 안내가 필요합니다.`],
+  r5: '범위가 넓은 이유: 같은 KSPO DOME 공연도 평소 대비 초과 주차가 517~1,924대(2025년 68일, 10~90%)로 달랐습니다. 공연 당일에는 실측 입출차로 범위를 좁히는 나우캐스트가 적용됩니다.',
+  opsT: '운영자 모드 — 시간대별 경보와 권장 조치', opsS: '선택한 날짜의 예상치(중간·최악)를 근거로 주차 안내 인력, 구역 유도, 대중교통 안내 시점을 제안합니다.',
+  opsH: ['시각', '예상 이용률', '최악', '경보', '권장 조치'], act: {pre: '사전 안내 문자·SNS(대중교통 권고)', zone: 'P6·P4·P5 만차 대비 P1·P10 유도 표지 가동', full: '진입 통제 준비, 외부 주차장·대중교통 안내', exit: '출차 유도 인력 배치(남2·동2문), 시차 귀가 안내', calm: '-', over: n => `임시 주차·대체 주차 안내(약 ${n}대 초과 예상)`},
+  ok1: '혼잡(70%) 진입 위험', ok1n: '최악 시나리오 기준 첫 시각', ok2: '만차(90%) 도달 위험', ok2n: '최악 시나리오 기준 첫 시각', ok3: '출차 인력 배치', ok4: '예상 최대 이용률', ok4n: '중간 시나리오', zoneT: '구역별 만차 순서(공공데이터 주차장 혼잡도 정보 699건)', zoneS: '만차 기록일 62일 기준. 최초 만차 일수 = 그날 가장 먼저 만차로 기록된 횟수.', zoneH: ['구역', '인근 시설', '만차 기록', '만차 시각 중앙값', '최초 만차 일수'],
+  rdate: '재현 날짜', now: '현재 시각', rnote: '2025-11-01(토)·02(일): KSPO DOME·올림픽홀 공연이 겹쳐 재차가 3,229대·3,181대로 공개 수용(2,200대)을 넘은 날입니다. 2025년 1~7월 데이터로만 학습한 모델로 예측했습니다(시간순 홀드아웃).',
+  lg2: ['실측 재차대수', '나우캐스트(1~3시간 뒤)', '평균 프로파일(사전 예측)'], rk: ['나우캐스트 오차(다음 3시간)', '현재값 유지 시 오차', '평균 프로파일 오차'], rkn: ['평균절대오차', '지금 숫자를 그대로 표시', '공연 반영 없는 사전 예측'],
+  accT: '예측 정확도 (2025년 입출차 1,975,475건 · 원천 수록이 완전한 240일)', accH: ['방식', '월 단위 교차검증 MAE(대)', '10~12월 홀드아웃 MAE(대)', '홀드아웃 MAPE'], nm: {profile: '평균 프로파일(같은 달·요일유형)', seasonal_naive: '전주 같은 시각', persist: '현재값 유지', pre_event_gbm: '사전 예측(공연·달력·기상)', nowcast: '올팍 나우 나우캐스트', nowcast_q80: '올팍 나우 위험측(80% 분위)'},
+  accN: (g, m) => `MAE·MAPE는 공연일 15~22시의 1~3시간 뒤 예측 기준. 나우캐스트 개선폭 95% 신뢰구간(공연일 부트스트랩 2,000회, 홀드아웃): 평균 프로파일 대비 ${g.holdout_q4.improve_ci95_vs_profile[0]}~${g.holdout_q4.improve_ci95_vs_profile[2]}대, 현재값 유지 대비 ${g.holdout_q4.improve_ci95_vs_persist[0]}~${g.holdout_q4.improve_ci95_vs_persist[2]}대. 홀드아웃 경보: 혼잡(70%) 재현율 ${g.holdout_q4.busy70_nowcast.recall}·정밀도 ${g.holdout_q4.busy70_nowcast.precision}(현재값 유지 ${g.holdout_q4.busy70_persist.recall}·${g.holdout_q4.busy70_persist.precision}), 만차(90%) 재현율 ${g.holdout_q4.full90_nowcast_q80.recall}(위험측). 2024년 7월 독립 검증(31회 날짜 교차검증)에서도 ${m.gbm.mae_event_evening}대로 평균 프로파일 ${m.profile.mae_event_evening}대보다 작았습니다.`,
+  qT: '분석 중 발견한 데이터 품질 개선점', qual: ['2025 입출차 정보(2,411,225건): 매월 말일 기록이 0건이고, 8·9월은 일평균 약 2.2천 건으로 다른 달(약 9.4천 건)의 23%, 11·12월은 1~7일만 수록되어 있습니다. 전수 집계로 확인했고, 수록이 완전한 날만 학습에 썼습니다.', '공연일 28일·117시간 동안 동2·남2·북2문 재차가 공개 수용 2,200대를 넘었습니다(최대 3,563대, 2025-04-06). 임시 주차 운영 여부나 수용 기준은 공개 자료로 확인되지 않아 확인이 필요하며, 현재 이용률 안내는 100%를 넘는 상황을 표현하지 못합니다.', '주차장 혼잡도 정보: 등록시간 699건 모두 분·초 자리에 등록일의 월·일이 들어가 있어(예: 2025-12-27 → 17:12:27) 시 단위만 유효합니다.', '2024년 7월 올림픽공원 주차 대수가 월별주차현황 59,808대, 입출차 정보 215,528건으로 집계 기준이 문서에 드러나지 않습니다.'],
+  dataT: '사용한 공공데이터', limT: '한계와 개선 계획', dataH: ['데이터', '제공', '활용'], lim: ['8·9월과 11월 7일 이후·12월 7일 이후는 원천 데이터 수록이 불완전해 학습·평가에서 뺐습니다. 기관이 전체 기록을 다시 제공하면 같은 코드로 재학습합니다.', '실시간 연동은 구조만 설계했고, 효과는 과거 데이터 재현(홀드아웃)으로 검증했습니다. 도입 시 실시간 주차현황 API를 주기 수집하는 서버로 상시 운영합니다.', '사전 예측(전날 기준)은 홀드아웃 MAPE 33.7%로, 당일 실측 보정(14.5%)이 필수입니다.', 'KSPO DOME 외 공연장의 초과수요는 좌석 수 비례로 근사했습니다.'],
+  foot: '데이터: 공공데이터포털 한국체육산업개발주식회사 올림픽공원 입출차 정보(2025 전수·2024-07)·월별주차현황·주차장 혼잡도 정보·공연정보, 한국체육산업개발 홈페이지 공연 일정·공연장·주차 안내, 기상 Open-Meteo. 예측값은 참고용입니다. · 제작 Bugeon Park', tipR: '범위'},
+ en: {sub: 'Concert-day parking operations decision support, calibrated with live entry/exit data — built on KSPO&CO public data', tabs: ['Operations dashboard', 'Nowcast check', 'Visitor guide', 'Validation & data'],
+  date: 'Visit date', wk: 'Weekend/holiday pattern', wd: 'Weekday pattern', chartT: 'Expected parking occupancy by hour', chartS: '(cars parked via East 2 / South 2 / North 2 gates; % of the published 2,200 spaces)',
+  lg1: ['Expected (middle scenario)', 'Range (68 KSPO DOME show days in 2025, 10th–90th pct)', 'Day without shows (2025, same day type, nearby months)'], k1: 'Peak expected occupancy', k2: 'Worst case (observed max)', k3: 'Arrive by car before', k4: 'Exit rush expected',
+  ok5: 'Expected cars over capacity', ok5n: 'worst case − 2,200 published spaces (overflow or diversion)', over: 'Over capacity', full: 'Full', cong: 'Busy', ok: 'OK', around: '', reach: 'Full at', noreach: 'Not full', before: '', k3n: '1 hour before reaching 70%', k4n: 'Show start +2–3h (56 of 68 KSPO DOME show days in 2025)',
+  recT: 'Recommendations', r1: ['Take the subway', 'Nearest station: Olympic Park Station, Lines 5 & 9 (official parking guide). The park also asks visitors to use public transport on big concert days.'],
+  r2: (v, lot, sp, c, arr) => [`Nearest lot to ${v}: ${lot}${sp ? ` (${sp} spaces)` : ''}`, `In the worst case it gets busy ${c != null ? 'from ' + fmtH(c) : 'never'}; arrive before ${arr}.`],
+  r3: ['Avoid the lots that fill first', 'In 2025–2026 congestion records, P6, P4 and P5 fill first on weekends (median 13:00) while P1A/P1B fill later (14–15:00). If you arrive late, try P1 (562 spaces) first.'],
+  r4: (h) => ['Leave a little later', `Exits peak 2–3 hours after the show starts (around ${h}); this held on 56 of 68 KSPO DOME show days in 2025. A staggered-exit notice before the show ends eases the gates.`],
+  r5: 'Why the range is wide: excess parking on KSPO DOME show days ranged from 517 to 1,924 cars (2025, 68 days, 10th–90th pct). On the day, the nowcast narrows it using live entry/exit counts.',
+  opsT: 'Operator view — hourly alerts and actions', opsS: 'Suggested staffing, lot guidance and transit messaging based on the middle and worst-case forecasts for the selected date.',
+  opsH: ['Hour', 'Expected', 'Worst', 'Alert', 'Suggested action'], act: {pre: 'Send transit advisory (SMS/SNS)', zone: 'Switch on signs guiding to P1/P10 before P6/P4/P5 fill', full: 'Prepare entry control; point to off-site parking and transit', exit: 'Exit staff at South 2/East 2 gates; staggered-exit notice', calm: '-', over: n => `Overflow / alternative parking notice (~${n} cars over)`},
+  ok1: 'Busy (70%) risk from', ok1n: 'first hour, worst case', ok2: 'Full (90%) risk from', ok2n: 'first hour, worst case', ok3: 'Exit staffing at', ok4: 'Expected peak', ok4n: 'middle scenario', zoneT: 'Lot fill order (public parking congestion data, 699 records)', zoneS: 'Based on 62 days with full-lot records. First-full days = times the lot was the first recorded full that day.', zoneH: ['Lot', 'Near', 'Full records', 'Median full hour', 'First-full days'],
+  rdate: 'Replay date', now: 'Current time', rnote: '2025-11-01 (Sat) and 02 (Sun): shows at KSPO DOME and Olympic Hall overlapped and 3,229 / 3,181 cars were parked, above the published 2,200 spaces. Predicted by a model trained only on Jan–Jul 2025 (time-ordered holdout).',
+  lg2: ['Observed cars parked', 'Nowcast (1–3h ahead)', 'Average profile'], rk: ['Nowcast error (next 3h)', 'Error if current value is held', 'Average-profile error'], rkn: ['Mean absolute error', 'Showing today\'s number as is', 'No show information'],
+  accT: 'Accuracy (2025 entry/exit, 1,975,475 records · 240 fully recorded days)', accH: ['Method', 'Month-CV MAE (cars)', 'Oct–Dec holdout MAE (cars)', 'Holdout MAPE'], nm: {profile: 'Average profile (month & day type)', seasonal_naive: 'Same hour last week', persist: 'Hold current value', pre_event_gbm: 'Day-ahead model (shows, calendar, weather)', nowcast: 'OlPark Now nowcast', nowcast_q80: 'OlPark Now 80th percentile'},
+  accN: (g, m) => `MAE/MAPE on show days 15:00–22:00, 1–3h ahead. 95% CI of nowcast improvement (2,000 bootstrap resamples of show days, holdout): ${g.holdout_q4.improve_ci95_vs_profile[0]}–${g.holdout_q4.improve_ci95_vs_profile[2]} cars vs profile, ${g.holdout_q4.improve_ci95_vs_persist[0]}–${g.holdout_q4.improve_ci95_vs_persist[2]} vs holding the current value. Holdout alerts: busy (70%) recall ${g.holdout_q4.busy70_nowcast.recall}, precision ${g.holdout_q4.busy70_nowcast.precision} (hold-current ${g.holdout_q4.busy70_persist.recall} / ${g.holdout_q4.busy70_persist.precision}); full (90%) recall ${g.holdout_q4.full90_nowcast_q80.recall} (80th pct). An independent July 2024 check (31-fold) gave ${m.gbm.mae_event_evening} cars vs ${m.profile.mae_event_evening} for the profile.`,
+  qT: 'Data quality issues found', qual: ['2025 entry/exit data (2,411,225 records): every month-end day has 0 records, August and September hold about 2.2k records a day (23% of the ~9.4k in other months), and November and December cover only days 1–7. Found by counting every record; only fully recorded days were used.', 'On 28 show days (117 hours) more cars were parked than the published 2,200 spaces (max 3,563 on 2025-04-06). Whether overflow parking was opened, or the capacity basis differs, is not in public data and needs checking; the current notice cannot show levels above 100%.', 'Parking congestion data: in all 699 records the minutes and seconds hold the month and day of the record date (e.g. 2025-12-27 → 17:12:27); only the hour is usable.', 'July 2024 Olympic Park parking is 59,808 cars in the monthly table but 215,528 records in the entry/exit file; the counting basis is not documented.'],
+  dataT: 'Public data used', limT: 'Limitations and next steps', dataH: ['Dataset', 'Provider', 'Use'], lim: ['August–September and days after the 7th in November–December are incompletely recorded at the source and were left out. The same code retrains if full records are supplied.', 'Live integration is designed but not deployed; its effect was verified by replaying past data (holdout). In operation a server polls the real-time parking API.', 'The day-ahead model has 33.7% holdout MAPE, so same-day correction (14.5%) is essential.', 'Excess demand at venues other than KSPO DOME is scaled by seat count.'],
+  foot: 'Data: data.go.kr Korea Sports Industry Development (Olympic Park entry/exit 2025 and Jul 2024, monthly parking, parking congestion, performances), KSPO&CO website schedules and parking guide, Open-Meteo weather. Forecasts are for reference. · Built by Bugeon Park', tipR: 'Range'}};
+const t = k => S[L][k];
+
+/* 공통 선 그래프 */
+function chart(el, {series, band, yMax, marks = [], vline}) {
+  const draw = () => {
+    const W = el.clientWidth || 900, Hh = el.clientHeight || 270, small = W < 520, Lm = small ? 34 : 42, R = 10, Tp = 14, B = 24;
+    const x = h => Lm + (W - Lm - R) * h / 23, y = v => Tp + (Hh - Tp - B) * (1 - v / yMax);
+    let s = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${t('chartT')}">`;
+    for (let v = 0; v <= yMax; v += 500) s += `<line x1="${Lm}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${Lm - 5}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+    for (let h = 0; h < 24; h += small ? 6 : 3) s += `<text x="${x(h)}" y="${Hh - 7}" text-anchor="middle">${h}${L === 'ko' ? '시' : 'h'}</text>`;
+    [[T70, '70%', 'var(--warn)'], [T90, '90%', 'var(--crit)']].forEach(([v, tx, c]) => s += `<line x1="${Lm}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${c}" stroke-dasharray="4 4" stroke-width="1.5"/><text x="${W - R}" y="${y(v) - 4}" text-anchor="end" style="fill:var(--t2)">${tx}</text>`);
+    if (band) { const p = band.hi.map((v, h) => `${x(h)},${y(v)}`).concat(band.lo.map((v, h) => `${x(h)},${y(v)}`).reverse()); s += `<polygon points="${p.join(' ')}" fill="var(--band)" opacity=".85"/>`; }
+    if (vline != null) s += `<line x1="${x(vline)}" x2="${x(vline)}" y1="${Tp}" y2="${Hh - B}" stroke="var(--t2)"/>`;
+    for (const se of series) {
+      const pts = []; for (let h = se.from ?? 0; h <= (se.to ?? 23); h++) if (se.y[h] != null) pts.push(`${x(h)},${y(se.y[h])}`);
+      s += `<polyline points="${pts.join(' ')}" fill="none" stroke="${se.color}" stroke-width="${se.width || 2}" stroke-linejoin="round" stroke-linecap="round" ${se.dash ? `stroke-dasharray="${se.dash}"` : ''} opacity="${se.op || 1}"/>`;
+      if (se.dots) for (let h = se.from; h <= se.to; h++) if (se.y[h] != null) s += `<circle cx="${x(h)}" cy="${y(se.y[h])}" r="4.5" fill="${se.color}" stroke="var(--s1)" stroke-width="2"/>`;
+    }
+    for (const m of marks) s += `<text x="${x(m.h)}" y="${y(m.v) - 9}" text-anchor="middle" style="fill:var(--t1);font-weight:600;font-size:12px">${m.t}</text>`;
+    s += `<line class="xh" y1="${Tp}" y2="${Hh - B}" stroke="var(--t3)" visibility="hidden"/></svg>`;
+    el.innerHTML = s;
+    const sv = el.querySelector('svg'), xh = sv.querySelector('.xh');
+    const move = e => {
+      const r = sv.getBoundingClientRect(), cx = (e.touches ? e.touches[0].clientX : e.clientX);
+      const h = Math.max(0, Math.min(23, Math.round((cx - r.left - Lm) / (W - Lm - R) * 23)));
+      xh.setAttribute('x1', x(h)); xh.setAttribute('x2', x(h)); xh.setAttribute('visibility', 'visible');
+      const lines = series.filter(se => se.name && se.y[h] != null && h >= (se.from ?? 0) && h <= (se.to ?? 23)).map(se => `${se.name} ${Math.round(se.y[h])} (${pct(se.y[h])})`);
+      if (band) lines.push(`${t('tipR')} ${Math.round(band.lo[h])}–${Math.round(band.hi[h])}`);
+      tip.innerHTML = `<b>${fmtH(h)}</b><br>` + lines.join('<br>'); tip.style.display = 'block';
+      tip.style.left = (cx + scrollX) + 'px';
+      tip.style.top = (r.top + scrollY + 10) + 'px';
+    };
+    sv.onmousemove = move; sv.ontouchstart = move; sv.ontouchmove = move;
+    sv.onmouseleave = () => { tip.style.display = 'none'; xh.setAttribute('visibility', 'hidden'); };
+  };
+  el._draw = draw; draw();
+  if (!el._ro) { el._ro = new ResizeObserver(() => el._draw && el._draw()); el._ro.observe(el); }
+}
+const legend = (el, items) => el.innerHTML = items.map(([c, n, h]) => `<span><i style="background:${c}${h ? ';height:9px' : ''}"></i>${n}</span>`).join('');
+
+/* 예측 */
+const byDate = {};
+M.sessions_upcoming.forEach(([d, v, s, n]) => (byDate[d] ||= []).push({v, s, n}));
+const dates = Object.keys(byDate).sort();
+const dow = d => (L === 'ko' ? '일월화수목금토' : ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'])[new Date(d + 'T00:00:00+09:00').getDay()];
+function forecast(d) {
+  const wd = new Date(d + 'T00:00:00+09:00').getDay(), weekend = wd === 0 || wd === 6 || HOL.has(d);
+  const mo = String(+d.slice(5, 7)), base = M.profile_m[mo][weekend ? 'weekend' : wd === 5 ? 'friday' : 'weekday'], sc = M['dome_excess_scenarios_rel_start_-6_to_+5'];
+  const add = k => { const o = Array(24).fill(0); for (const se of byDate[d]) { const w = M.venues[se.v].seats / 15000; const r0 = M.scen_from ?? -6; for (let i = 0; i < sc[k].length; i++) { const h = se.s + r0 + i; if (h >= 0 && h < 24) o[h] += sc[k][i] * w; } } return o; };
+  const mk = k => { const a = add(k); return base.map((b, h) => b + a[h]); };
+  const A = ['low', 'mid', 'high'].map(mk); return {weekend, base, mid: A[1], lo: A[0].map((_, h) => Math.min(...A.map(x => x[h]))), hi: A[0].map((_, h) => Math.max(...A.map(x => x[h])))};
+}
+const ym = a => Math.max(2500, Math.ceil(Math.max(...a) / 500) * 500);
+const firstCross = (a, thr, from = 6) => { for (let h = from; h < 24; h++) if (a[h] >= thr) return h; return null; };
+const level = v => v > CAP ? [t('over'), 'var(--crit)', '◆'] : v >= T90 ? [t('full'), 'var(--crit)', '■'] : v >= T70 ? [t('cong'), 'var(--warn)', '▲'] : [t('ok'), 'var(--good)', '●'];
+const mainOf = ss => ss.reduce((a, b) => M.venues[b.v].seats > M.venues[a.v].seats ? b : a);
+
+function drawPlan() {
+  const d = $('#date').value, f = forecast(d), ss = byDate[d].slice().sort((a, b) => a.s - b.s), main = mainOf(ss);
+  $('#dtype').textContent = f.weekend ? t('wk') : t('wd');
+  $('#sess').innerHTML = ss.map(x => `<span class="tag">${fmtH(x.s)} · ${vn(x.v)} · ${x.n}</span>`).join('');
+  const peakH = f.mid.indexOf(Math.max(...f.mid)), c70hi = firstCross(f.hi, T70), c90hi = firstCross(f.hi, T90), exitH = main.s + 3;
+  const arr = fmtH(Math.max(6, (c70hi ?? main.s - 1) - 1)), [lv, lc, li] = level(f.mid[peakH]);
+  $('#kpis').innerHTML = `
+    <div class="kpi"><div class="l">${t('k1')}</div><div class="v">${pct(f.mid[peakH])}</div><div class="n"><span class="lv" style="color:${lc}">${li}</span> ${lv} · ${fmtH(peakH)} ${t('around')}</div></div>
+    <div class="kpi"><div class="l">${t('k2')}</div><div class="v">${pct(Math.max(...f.hi))}</div><div class="n">${c90hi != null ? t('reach') + ' ' + fmtH(c90hi) : t('noreach')}</div></div>
+    <div class="kpi"><div class="l">${t('k3')}</div><div class="v">${arr} ${t('before')}</div><div class="n">${t('k3n')}</div></div>
+    <div class="kpi"><div class="l">${t('k4')}</div><div class="v">${fmtH(exitH)}</div><div class="n">${t('k4n')}</div></div>`;
+  legend($('#lg1'), [['var(--s-1)', t('lg1')[0]], ['var(--band)', t('lg1')[1], 1], ['var(--t3)', t('lg1')[2]]]);
+  chart($('#c1'), {yMax: ym(f.hi), band: {lo: f.lo, hi: f.hi}, series: [{y: f.base, color: 'var(--t3)', dash: '3 4', width: 1.5, name: t('lg1')[2]}, {y: f.mid, color: 'var(--s-1)', width: 2.5, name: t('lg1')[0]}], marks: [{h: peakH, v: f.mid[peakH], t: pct(f.mid[peakH])}]});
+  const vi = M.venues[main.v], r2 = t('r2')(vn(main.v), vi.lot ?? '-', vi.lot_spaces, c70hi, arr), r4 = t('r4')(fmtH(exitH));
+  const rec = (ic, [h, b]) => `<div class="rec"><span class="ic">${ic}</span><div><b>${h}</b> — ${b}</div></div>`;
+  $('#recs').innerHTML = `<strong>${t('recT')}</strong>${rec('M', t('r1'))}${rec('P', r2)}${rec('Z', t('r3'))}${rec('E', r4)}<div class="rec"><span class="ic">i</span><div class="muted">${t('r5')}</div></div>`;
+  drawOps(d, f, main);
+}
+function drawOps(d, f, main) {
+  const rows = []; const A = t('act');
+  const c70 = firstCross(f.hi, T70), c90 = firstCross(f.hi, T90), pk = f.mid.indexOf(Math.max(...f.mid));
+  $('#okpis').innerHTML = [[t('ok1'), c70 != null ? fmtH(c70) : '-', t('ok1n')], [t('ok2'), c90 != null ? fmtH(c90) : '-', t('ok2n')], [t('ok3'), fmtH(main.s + 3), t('k4n')], [t('ok4'), pct(f.mid[pk]) + ' · ' + fmtH(pk), t('ok4n')], [t('ok5'), Math.max(0, Math.round((Math.max(...f.hi) - CAP) / 10) * 10) + (L === 'ko' ? '대' : ' cars'), t('ok5n')]]
+    .map(([l, v, n]) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="n">${n}</div></div>`).join('');
+  legend($('#lg0'), [['var(--s-1)', t('lg1')[0]], ['var(--band)', t('lg1')[1], 1], ['var(--t3)', t('lg1')[2]]]);
+  chart($('#c0'), {yMax: ym(f.hi), band: {lo: f.lo, hi: f.hi}, series: [{y: f.base, color: 'var(--t3)', dash: '3 4', width: 1.5, name: t('lg1')[2]}, {y: f.mid, color: 'var(--s-1)', width: 2.5, name: t('lg1')[0]}], marks: [{h: pk, v: f.mid[pk], t: pct(f.mid[pk])}]});
+  for (let h = 8; h <= 23; h++) {
+    const [lv, lc, li] = level(f.hi[h]); let a = A.calm;
+    if (h === Math.max(8, (firstCross(f.hi, T70) ?? 25) - 3)) a = A.pre;
+    if (h === firstCross(f.hi, T70) - 1) a = A.zone;
+    if (h === firstCross(f.hi, T90)) a = A.full;
+    if (f.hi[h] > CAP && a === A.calm) a = A.over(Math.round((f.hi[h] - CAP) / 10) * 10);
+    if (h === main.s + 3 || h === main.s + 2) a = A.exit;
+    rows.push(`<tr><td class="num">${fmtH(h)}</td><td class="num">${pct(f.mid[h])}</td><td class="num">${pct(f.hi[h])}</td><td><span class="lv" style="color:${lc}">${li}</span> ${lv}</td><td>${a}</td></tr>`);
+  }
+  $('#opsTbl').innerHTML = `<tr>${t('opsH').map((x, i) => `<th class="${i < 3 ? 'num' : ''}">${x}</th>`).join('')}</tr>` + rows.join('');
+}
+function drawZones() {
+  const Z = M.zones.zones;
+  $('#zoneTbl').innerHTML = `<tr>${t('zoneH').map((x, i) => `<th class="${i > 1 ? 'num' : ''}">${x}</th>`).join('')}</tr>` +
+    Object.entries(Z).sort((a, b) => b[1].first_full_days - a[1].first_full_days).map(([z, v]) => `<tr><td><b>${z}</b></td><td>${v.near ? vn(v.near) : '-'}</td><td class="num">${v.full}/${v.records}</td><td class="num">${fmtH(v.full_hour_median)}</td><td class="num">${v.first_full_days}</td></tr>`).join('');
+}
+
+/* 재현 */
+function drawReplay() {
+  const R = M.replay[$('#rd').value], h0 = +$('#h0').value; $('#h0v').textContent = fmtH(h0);
+  const nc = Array(24).fill(null); nc[h0] = R.actual[h0]; Object.entries(R.nowcast[h0] || {}).forEach(([k, v]) => nc[+k] = v);
+  const last = Math.min(23, h0 + 3), lg = t('lg2');
+  legend($('#lg2'), [['var(--s-1)', lg[0]], ['var(--s-2)', lg[1]], ['var(--t3)', lg[2]]]);
+  chart($('#c2'), {yMax: ym(R.actual), vline: h0, series: [{y: R.profile, color: 'var(--t3)', dash: '3 4', width: 1.5, name: lg[2]}, {y: R.actual, color: 'var(--s-1)', width: 1.5, op: .3, from: h0}, {y: R.actual, color: 'var(--s-1)', width: 2.5, to: h0, name: lg[0]}, {y: nc, color: 'var(--s-2)', width: 2.5, from: h0, to: last, dots: true, name: lg[1]}]});
+  const err = a => { let s = 0, n = 0; for (let k = h0 + 1; k <= last; k++) { s += Math.abs(a[k] - R.actual[k]); n++; } return n ? Math.round(s / n) : 0; };
+  const flat = Array(24).fill(R.actual[h0]), unit = L === 'ko' ? '대' : ' cars';
+  $('#rk').innerHTML = [err(nc), err(flat), err(R.profile)].map((v, i) => `<div class="kpi"><div class="l">${t('rk')[i]}</div><div class="v">${v}${unit}</div><div class="n">${t('rkn')[i]}</div></div>`).join('');
+}
+
+/* 검증 */
+function drawValid() {
+  const G = M.metrics2025, cv = G.month_cv, ho = G.holdout_q4;
+  $('#mt').innerHTML = `<tr>${t('accH').map((x, i) => `<th class="${i ? 'num' : ''}">${x}</th>`).join('')}</tr>` + ['profile', 'seasonal_naive', 'persist', 'pre_event_gbm', 'nowcast', 'nowcast_q80'].map(k => `<tr${k === 'nowcast' ? ' style="font-weight:600"' : ''}><td>${t('nm')[k]}</td><td class="num">${cv.mae_event_evening[k].toFixed(1)}</td><td class="num">${ho.mae_event_evening[k].toFixed(1)}</td><td class="num">${ho.mape_event_evening[k].toFixed(1)}%</td></tr>`).join('');
+  $('#accN').textContent = t('accN')(G, M.metrics);
+  $('#qual').innerHTML = t('qual').map(x => `<li>${x}</li>`).join('');
+  $('#lim').innerHTML = t('lim').map(x => `<li>${x}</li>`).join('');
+  const DS = L === 'ko' ? [
+    ['올림픽공원 입출차 정보 2025 (2,411,225건 전수)', '한국체육산업개발 · 문화공공데이터광장 API', '12개월 재차 복원·학습·검증'], ['올림픽공원 입출차 정보 (2024-07, 215,528건)', '한국체육산업개발 · 15138735', '독립 검증(2024-07)'], ['주차장 혼잡도 정보 (699건)', '한국체육산업개발 · 15164156', '구역별 만차 순서·시각 → 구역 유도'], ['월별주차현황 (2023~2025)', '한국체육산업개발 · 15131671', '계절성·집계 기준 점검'],
+    ['영문 공연정보 · 올림픽공원 공연정보', '한국체육산업개발 · 15149169 / 3037877', '영문 모드·공연 일정 연동'], ['실시간 주차현황', '한국체육산업개발 · 15168686', '당일 나우캐스트 입력'], ['2025 입출차·공연·날씨 연계 데이터', '한국체육산업개발 · 15164822', '공연 관람객 수 변수, 재차 교차검증(상관 0.95)'], ['시간별 기상 (2024-07, 2025)', 'Open-Meteo', '기온·강수 변수']] : [
+    ['Olympic Park entry/exit 2025 (all 2,411,225)', 'KSPO&CO · Culture Data Plaza API', '12-month occupancy, training, validation'], ['Olympic Park entry/exit (Jul 2024, 215,528)', 'KSPO&CO · 15138735', 'Independent check (Jul 2024)'], ['Parking congestion (699 records)', 'KSPO&CO · 15164156', 'Lot fill order → lot guidance'], ['Monthly parking (2023–2025)', 'KSPO&CO · 15131671', 'Seasonality, counting checks'],
+    ['English performance info · Performances', 'KSPO&CO · 15149169 / 3037877', 'English mode, schedules'], ['Real-time parking', 'KSPO&CO · 15168686', 'Same-day nowcast input'], ['2025 entry/exit·performance·weather', 'KSPO&CO · 15164822', 'Audience size feature; occupancy cross-check (r = 0.95)'], ['Hourly weather (Jul 2024, 2025)', 'Open-Meteo', 'Temperature, rain']];
+  $('#dt').innerHTML = `<tr>${t('dataH').map(x => `<th>${x}</th>`).join('')}</tr>` + DS.map(r => `<tr><td>${r[0]}</td><td class="muted">${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+}
+
+/* 탭·언어 */
+const IDS = ['ops', 'replay', 'plan', 'valid'];
+let cur = IDS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'ops';
+function show(id) {
+  cur = id; IDS.forEach(x => $('#' + x).classList.toggle('hide', x !== id)); $('#dcard').classList.toggle('hide', !['ops', 'plan'].includes(id));
+  document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.t === id));
+  if (id === 'replay') drawReplay();
+  if (location.hash.slice(1) !== id) history.replaceState(null, '', '#' + id);
+}
+function render() {
+  document.documentElement.lang = L; $('#lang').textContent = L === 'ko' ? 'English' : '한국어';
+  document.querySelectorAll('[data-i]').forEach(e => e.textContent = t(e.dataset.i));
+  $('#tabs').innerHTML = t('tabs').map((n, i) => `<button role="tab" data-t="${IDS[i]}">${n}</button>`).join('');
+  document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => show(b.dataset.t));
+  const ds = $('#date'), keep = ds.value;
+  ds.innerHTML = dates.map(d => `<option value="${d}">${d} (${dow(d)}) · ${byDate[d].map(x => vn(x.v)).join(', ')}</option>`).join('');
+  const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  ds.value = keep || dates.find(d => d >= today) || dates[0];
+  $('#rd').innerHTML = Object.keys(M.replay).map(d => `<option>${d}</option>`).join('');
+  drawPlan(); drawZones(); drawValid(); show(cur);
+}
+$('#lang').onclick = () => { L = L === 'ko' ? 'en' : 'ko'; try { localStorage.setItem('olpark-lang', L); } catch (e) {} render(); };
+$('#date').onchange = drawPlan; $('#rd').onchange = drawReplay; $('#h0').oninput = drawReplay;
+addEventListener('hashchange', () => { const h = location.hash.slice(1); if (IDS.includes(h) && h !== cur) show(h); });
+render();
+}
+</script>
+</body>
+</html>

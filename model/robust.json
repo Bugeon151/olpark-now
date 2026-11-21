@@ -1,0 +1,21 @@
+{
+ "seasonal_naive_evening_d>=8": 507.1,
+ "gbm_evening_d>=8": 155.4,
+ "profile_evening_d>=8": 338.6,
+ "improve_vs_profile_CI95": [
+  95.6,
+  183.9,
+  281.3
+ ],
+ "improve_vs_persist_CI95": [
+  87.9,
+  153.1,
+  234.9
+ ],
+ "ablation_event_evening_MAE": {
+  "전체 변수": 147.1,
+  "-기상(기온·강수)": 146.7,
+  "-공연 일정": 168.2,
+  "-실시간 추세(변화량·입출차)": 146.3
+ }
+}
