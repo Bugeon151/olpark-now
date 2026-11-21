@@ -2,30 +2,35 @@
  "test_event_days": 16,
  "train_dome_days": 55,
  "train_outdoor_days": 9,
- "band_coverage_9_22": 0.571,
- "peak_mae_mid": 665.2,
+ "train_venue_days": {
+  "올림픽홀": 22,
+  "핸드볼경기장": 7,
+  "우리금융아트홀": 3
+ },
+ "band_coverage_9_22": 0.777,
+ "peak_mae_mid": 721.7,
  "busy70": {
   "actual_days": 13,
   "warned_days": 16,
   "hit": 13,
   "false_alarm": 3,
-  "median_lead_h": 0.0,
-  "lead_ge0_share": 0.538
+  "median_lead_h": 1.0,
+  "lead_ge0_share": 1.0
  },
  "full90": {
   "actual_days": 9,
-  "warned_days": 15,
+  "warned_days": 16,
   "hit": 9,
-  "false_alarm": 6,
-  "median_lead_h": -1.0,
-  "lead_ge0_share": 0.444
+  "false_alarm": 7,
+  "median_lead_h": 1.0,
+  "lead_ge0_share": 1.0
  },
  "over": {
   "actual_days": 8,
-  "warned_days": 15,
+  "warned_days": 16,
   "hit": 8,
-  "false_alarm": 7,
-  "median_lead_h": -2.0,
-  "lead_ge0_share": 0.375
+  "false_alarm": 8,
+  "median_lead_h": 2.0,
+  "lead_ge0_share": 0.875
  }
 }

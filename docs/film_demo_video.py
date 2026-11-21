@@ -71,7 +71,7 @@ async def main():
         await pg.fill('#h0', '15'); await pg.dispatch_event('#h0', 'input'); await pg.wait_for_timeout(150)
         await r.cap('15시 기준: 실측으로 보정한 예측이 평소 패턴(회색 점선)보다 훨씬 정확합니다'); await r.shot('s5', 6)
         # 6 검증
-        await r.tab('valid'); await r.cap('10~12월 홀드아웃: 오차 179.0대(MAPE 14.5%) — 현재값 유지(429.9대)보다 58% 작음 · 혼잡 경보 정밀도 0.905')
+        await r.tab('valid'); await r.cap('10~12월 홀드아웃: 오차 179.0대(MAPE 14.5%) — 현재값 유지보다 58%, 가장 강한 기준보다 23% 작음 · 혼잡 경보 정밀도 0.905')
         await r.shot('s6', 8)
         await r.to('#qual', 140); await r.cap('241만 건을 전수 집계하며 찾은 데이터 품질 개선점도 공개합니다'); await r.shot('s6', 6)
         # 7 관람객 안내 + 영문

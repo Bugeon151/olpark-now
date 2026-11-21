@@ -62,5 +62,5 @@ def test_strong_baseline_and_dayahead():
     has(f"가장 강한 기준모델 대비 {ho['improve_ci95_vs_event_shape'][0]}~{ho['improve_ci95_vs_event_shape'][2]}대")
     assert ho['improve_ci95_vs_event_shape'][0] > 0 and cv['improve_ci95_vs_event_shape'][0] > 0
     has(f"공연일 {S['test_event_days']}일에 적용", f"({S['busy70']['actual_days']}·{S['full90']['actual_days']}·{S['over']['actual_days']}일)",
-        f"(오경보 {S['busy70']['false_alarm']}·{S['full90']['false_alarm']}·{S['over']['false_alarm']}일)", f"비율은 {round(100 * S['band_coverage_9_22'])}%", f"오차는 {c(S['peak_mae_mid'])}대")
+        f"(오경보 {S['busy70']['false_alarm']}·{S['full90']['false_alarm']}·{S['over']['false_alarm']}일)", f"비율은 {round(100 * S['band_coverage_9_22'])}%", f"오차도 {c(S['peak_mae_mid'])}대")
     for k2 in ('busy70', 'full90', 'over'): assert S[k2]['hit'] == S[k2]['actual_days']

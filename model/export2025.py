@@ -2,6 +2,7 @@
 import json, numpy as np
 from pathlib import Path
 import model2025 as M
+import scen_eval as SE
 
 P = Path(__file__).parent; ROOT = P.parent
 cv = np.load(P / 'cv2025.npy'); ho = np.load(P / 'ho2025.npy')
@@ -64,10 +65,13 @@ out.update({
     'source_year': 2025, 'cap': CAP,
     'profile_m': {str(m): {k: PP[m][k][0].round().tolist() for k in PP[m]} for m in range(1, 13)},
     'profile_m_days_window': {str(m): {k: [PP[m][k][1], PP[m][k][2]] for k in PP[m]} for m in range(1, 13)},
-    'dome_excess_scenarios_rel_start_-6_to_+5': scen, 'scen_from': -10, 'outdoor_excess_scenarios': scen_out, 'outdoor_days': len(outd), 'dome_days': len(dome), 'dome_peak_excess_p10_p50_p90_max': [round(pk[q(.1)]), round(pk[q(.5)]), round(pk[q(.9)]), round(max(pk.values()))],
+    'dome_excess_scenarios_rel_start_-6_to_+5': {k: [round(float(x)) for x in SE.scenarios(allidx)[0][q]] for k, q in (('low', 10), ('mid', 50), ('high', 90))}, 'scen_from': -10,
+    'outdoor_excess_scenarios': {k: [round(float(x)) for x in SE.scenarios(allidx, '야외')[0][q]] for k, q in (('low', 10), ('mid', 50), ('high', 90))}, 'outdoor_days': len(outd), 'dome_days': len(dome), 'dome_peak_excess_p10_p50_p90_max': [round(pk[q(.1)]), round(pk[q(.5)]), round(pk[q(.9)]), round(max(pk.values()))],
     'dep_peak_rel_counts': dep_rel_counts, 'annual': {'valid_days': len(allidx), 'busy_hours': busy_h, 'full_hours': full_h, 'busy_days': busy_days, 'full_days': full_days},
     'metrics2025': met, 'replay': replay,
     'scen_eval': json.load(open(P / 'scen_eval.json')),
+    'venue_excess_scenarios': {v: {k: [round(float(x)) for x in sc_v[q]] for k, q in (('low', 10), ('mid', 50), ('high', 90))}
+                               for v in ('올림픽홀', '핸드볼경기장', '우리금융아트홀') for sc_v, n in [SE.venue_scen(allidx, v)] if sc_v is not None},
 })
 json.dump(out, open(ROOT / 'demo/model.json', 'w'), ensure_ascii=False, separators=(',', ':'))
 print(json.dumps({k: out[k] for k in ('dome_days', 'dome_peak_excess_p10_p50_p90_max', 'dep_peak_rel_counts', 'annual')}, ensure_ascii=False), list(replay))
