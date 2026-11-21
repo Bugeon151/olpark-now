@@ -48,3 +48,8 @@ def test_secondary_facts():
         if ss: off.append(next((h - min(ss) for h in range(24) if M.OCC[i, h] >= 1540), None))
     r = [x for x in off if x is not None]
     has(f'68일 중 {len(r)}일이 혼잡(70%)에 이르렀고, 그 시각은 공연 시작 {int(-np.median(r))}시간 전')
+
+def test_live_model_holdout():
+    L = json.load(open(ROOT / 'model/live_eval.json'))['holdout_live_model']
+    has(f"홀드아웃 MAE {f1(L['nowcast_live'])}대, MAPE {f1(L['mape_nowcast_live'])}%")
+    assert L['nowcast_live'] < L['persist']

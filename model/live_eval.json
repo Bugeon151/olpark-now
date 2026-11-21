@@ -1,0 +1,8 @@
+{
+ "holdout_live_model": {
+  "n_event_evening": 368,
+  "nowcast_live": 213.3,
+  "persist": 429.9,
+  "mape_nowcast_live": 18.1
+ }
+}
