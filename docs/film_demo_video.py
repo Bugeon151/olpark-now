@@ -3,9 +3,10 @@ import asyncio, json, base64, sys
 from pathlib import Path
 from playwright.async_api import async_playwright
 
+ROOT = Path(__file__).resolve().parents[1]
 OUT = Path(__file__).parent / 'frames'; OUT.mkdir(exist_ok=True)
-DEMO = 'file:///home/claude/kspo/demo/index.html'
-FIG = Path('/home/claude/kspo/docs/fig')
+DEMO = (ROOT / 'index.html').as_uri()
+FIG = ROOT / 'docs/fig'
 SC = {}
 
 CAP_JS = """(t) => { let d = document.getElementById('__cap'); if (!d) { d = document.createElement('div'); d.id = '__cap';
@@ -33,7 +34,7 @@ def img_card(path, title, note):
 
 async def main():
     async with async_playwright() as p:
-        b = await p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--no-sandbox'])
+        b = await p.chromium.launch(args=['--no-sandbox'])
         pg = await b.new_page(viewport={'width': 1280, 'height': 720}, device_scale_factor=1.5)
         r = Rec(pg)
         # 1 타이틀
