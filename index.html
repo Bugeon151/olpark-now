@@ -71,7 +71,7 @@ a{color:var(--s-1)}
 </section>
 <section id="ops">
   <div class="card"><div class="kpis" id="okpis"></div></div>
-  <div class="card"><strong data-i="chartT"></strong> <span class="muted" data-i="chartS"></span><div class="legend" id="lg0"></div><div class="fig" id="c0"></div></div>
+  <div class="card"><strong data-i="chartT"></strong> <span class="muted" data-i="chartS"></span><div class="legend" id="lg0"></div><div class="fig" id="c0"></div><p class="muted" id="liveN" style="margin:8px 0 0"></p></div>
   <div class="card"><strong data-i="opsT"></strong><p class="muted" data-i="opsS"></p><div class="scroll"><table id="opsTbl"></table></div></div>
   <div class="card"><strong data-i="zoneT"></strong><p class="muted" data-i="zoneS"></p><div class="scroll"><table id="zoneTbl"></table></div></div>
 </section>
@@ -110,7 +110,7 @@ const S = {
  ko: {sub: '실측 입출차 데이터로 현장 상황을 보정하는 공연일 주차 운영 의사결정 지원 시스템 — 한국체육산업개발(주) 공공데이터', tabs: ['운영 대시보드', '나우캐스트 검증', '관람객 안내', '검증·데이터'],
   date: '방문 날짜', wk: '주말·공휴일 패턴', wd: '평일 패턴', chartT: '시간대별 예상 주차장 이용률', chartS: '(동2·남2·북2문 합산 재차대수, 기관 공개 수용 2,200대 기준 %)',
   lg1: ['예상(중간 시나리오)', '예상 범위(2025 공연일 관측 10~90%, 공연장별)', '공연 없는 날(2025, 같은 요일유형·인접 월 평균)'], k1: '최대 예상 이용률', k2: '최악의 경우(관측 최대치)', k3: '자가용 도착 권장', k4: '출차 몰림 예상',
-  ok5: '수용 초과 예상 대수', ok5n: '최악 시나리오 − 공개 수용 2,200대(임시 주차·대체 안내 검토)', over: '수용 초과', full: '만차', cong: '혼잡', ok: '여유', around: '전후', reach: '만차 도달', noreach: '만차 미도달', before: '이전', k3n: '혼잡(70%) 진입 1시간 전', k4n: '공연 시작 +2~3시간 (2025 KSPO DOME 공연일 68일 중 56일)',
+  liveL: '실측(실시간 API, 새벽 기준선 보정)', liveWait: (n, hh, v) => `실시간 수집 ${n}회 · 마지막 ${hh} 주차 대수 ${v.toLocaleString()}대. 집계 기준 보정에 쓸 새벽(03~05시) 값이 모이면 실측선을 그래프에 겹쳐 표시합니다.`, liveN: (n, hh, v, off, ok) => `실시간 수집 ${n}회 · 마지막 ${hh} 주차 대수 ${v.toLocaleString()}대. 실시간 API 값은 집계 기준이 달라 ${ok ? `새벽 기준선 차이 ${off.toLocaleString()}대를 빼고` : '보정 없이'} 표시합니다(한국체육산업개발 공개 API, 5분 간격).`, ok5: '수용 초과 예상 대수', ok5n: '최악 시나리오 − 공개 수용 2,200대(임시 주차·대체 안내 검토)', over: '수용 초과', full: '만차', cong: '혼잡', ok: '여유', around: '전후', reach: '만차 도달', noreach: '만차 미도달', before: '이전', k3n: '혼잡(70%) 진입 1시간 전', k4n: '공연 시작 +2~3시간 (2025 KSPO DOME 공연일 68일 중 56일)',
   recT: '맞춤 안내', r1: ['대중교통 우선', '가장 가까운 역은 5·9호선 올림픽공원역입니다(공식 주차 안내). 대형 공연 시 기관도 대중교통 이용을 권고합니다.'],
   r2: (v, lot, sp, c, arr) => [`${v} 최근접 주차장 ${lot}${sp ? ` (${sp}면)` : ''}`, `최악의 경우 ${c != null ? fmtH(c) + '부터 혼잡' : '혼잡 없음'}이 예상되어 ${arr} 이전 도착을 권장합니다.`],
   r3: ['먼저 차는 구역 피하기', '2025~2026년 혼잡도 기록상 주말에는 P6·P4·P5가 가장 먼저(만차 시각 중앙값 13시) 만차가 되고, P1A·P1B는 늦게(14~15시) 찹니다. 늦게 도착한다면 P1(562면)을 먼저 찾으세요.'],
@@ -129,7 +129,7 @@ const S = {
  en: {sub: 'Concert-day parking operations decision support, calibrated with live entry/exit data — built on KSPO&CO public data', tabs: ['Operations dashboard', 'Nowcast check', 'Visitor guide', 'Validation & data'],
   date: 'Visit date', wk: 'Weekend/holiday pattern', wd: 'Weekday pattern', chartT: 'Expected parking occupancy by hour', chartS: '(cars parked via East 2 / South 2 / North 2 gates; % of the published 2,200 spaces)',
   lg1: ['Expected (middle scenario)', 'Range (2025 show days by venue, 10th–90th pct)', 'Day without shows (2025, same day type, nearby months)'], k1: 'Peak expected occupancy', k2: 'Worst case (observed max)', k3: 'Arrive by car before', k4: 'Exit rush expected',
-  ok5: 'Expected cars over capacity', ok5n: 'worst case − 2,200 published spaces (overflow or diversion)', over: 'Over capacity', full: 'Full', cong: 'Busy', ok: 'OK', around: '', reach: 'Full at', noreach: 'Not full', before: '', k3n: '1 hour before reaching 70%', k4n: 'Show start +2–3h (56 of 68 KSPO DOME show days in 2025)',
+  liveL: 'Observed (live API, night-baseline adjusted)', liveWait: (n, hh, v) => `${n} live samples · last ${hh}: ${v.toLocaleString()} cars. The observed line appears once the 03:00–05:00 baseline for adjustment has been collected.`, liveN: (n, hh, v, off, ok) => `${n} live samples · last ${hh}: ${v.toLocaleString()} cars. The live API counts on a different basis, so ${ok ? `the night-baseline gap of ${off.toLocaleString()} cars is removed` : 'values are shown unadjusted'} (KSPO&CO public API, every 5 minutes).`, ok5: 'Expected cars over capacity', ok5n: 'worst case − 2,200 published spaces (overflow or diversion)', over: 'Over capacity', full: 'Full', cong: 'Busy', ok: 'OK', around: '', reach: 'Full at', noreach: 'Not full', before: '', k3n: '1 hour before reaching 70%', k4n: 'Show start +2–3h (56 of 68 KSPO DOME show days in 2025)',
   recT: 'Recommendations', r1: ['Take the subway', 'Nearest station: Olympic Park Station, Lines 5 & 9 (official parking guide). The park also asks visitors to use public transport on big concert days.'],
   r2: (v, lot, sp, c, arr) => [`Nearest lot to ${v}: ${lot}${sp ? ` (${sp} spaces)` : ''}`, `In the worst case it gets busy ${c != null ? 'from ' + fmtH(c) : 'never'}; arrive before ${arr}.`],
   r3: ['Avoid the lots that fill first', 'In 2025–2026 congestion records, P6, P4 and P5 fill first on weekends (median 13:00) while P1A/P1B fill later (14–15:00). If you arrive late, try P1 (562 spaces) first.'],
@@ -220,6 +220,33 @@ function drawPlan() {
   $('#recs').innerHTML = `<strong>${t('recT')}</strong>${rec('M', t('r1'))}${rec('P', r2)}${rec('Z', t('r3'))}${rec('E', r4)}<div class="rec"><span class="ic">i</span><div class="muted">${t('r5')}</div></div>`;
   drawOps(d, f, main);
 }
+const LIVE = {};
+async function loadLive(d) {
+  if (d in LIVE) return LIVE[d];
+  LIVE[d] = null;
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/Bugeon151/olpark-now/live-data/data/live/${d}.csv`, {cache: 'no-store'});
+    if (!r.ok) return null;
+    const pts = (await r.text()).trim().split('\n').map(l => l.split(',')).filter(x => x[1]).map(([ts, n]) => [new Date(ts.replace(/(\d{2})(\d{2})$/, '$1:$2')), +n]);
+    if (!pts.length) return null;
+    const day = new Date(d + 'T00:00:00+09:00'), raw = Array(24).fill(null);
+    for (let h = 0; h < 24; h++) { const tg = +day + (h * 60 + 30) * 6e4; let best = null; for (const [t0, n] of pts) { const dt = Math.abs(t0 - tg); if (dt <= 9e5 && (!best || dt < best[0])) best = [dt, n]; } if (best) raw[h] = best[1]; }
+    LIVE[d] = {raw, n: pts.length, last: pts[pts.length - 1]};
+  } catch (e) { LIVE[d] = null; }
+  return LIVE[d];
+}
+function liveOverlay(d, f, pk) {
+  loadLive(d).then(L => {
+    if (!L || $('#date').value !== d) { $('#liveN').textContent = ''; return; }
+    const night = [3, 4, 5].filter(h => L.raw[h] != null), off = night.length ? night.reduce((a, h) => a + L.raw[h] - f.base[h], 0) / night.length : 0;
+    const last = L.last[0], hh = String(last.getHours()).padStart(2, '0') + ':' + String(last.getMinutes()).padStart(2, '0');
+    if (!night.length) { $('#liveN').textContent = t('liveWait')(L.n, hh, L.last[1]); return; }
+    const adj = L.raw.map(v => v == null ? null : Math.max(0, v - off));
+    legend($('#lg0'), [['var(--s-1)', t('lg1')[0]], ['var(--band)', t('lg1')[1], 1], ['var(--t3)', t('lg1')[2]], ['var(--s-2)', t('liveL')]]);
+    chart($('#c0'), {yMax: ym(f.hi.concat(adj.filter(v => v != null))), band: {lo: f.lo, hi: f.hi}, series: [{y: f.base, color: 'var(--t3)', dash: '3 4', width: 1.5, name: t('lg1')[2]}, {y: f.mid, color: 'var(--s-1)', width: 2.5, name: t('lg1')[0]}, {y: adj, color: 'var(--s-2)', width: 2.5, name: t('liveL'), dots: true, from: 0, to: 23}], marks: [{h: pk, v: f.mid[pk], t: pct(f.mid[pk])}]});
+    $('#liveN').textContent = t('liveN')(L.n, hh, L.last[1], Math.round(off), night.length > 0);
+  });
+}
 function drawOps(d, f, main) {
   const rows = []; const A = t('act');
   const c70 = firstCross(f.hi, T70), c90 = firstCross(f.hi, T90), pk = f.mid.indexOf(Math.max(...f.mid));
@@ -237,6 +264,7 @@ function drawOps(d, f, main) {
     rows.push(`<tr><td class="num">${fmtH(h)}</td><td class="num">${pct(f.mid[h])}</td><td class="num">${pct(f.hi[h])}</td><td><span class="lv" style="color:${lc}">${li}</span> ${lv}</td><td>${a}</td></tr>`);
   }
   $('#opsTbl').innerHTML = `<tr>${t('opsH').map((x, i) => `<th class="${i < 3 ? 'num' : ''}">${x}</th>`).join('')}</tr>` + rows.join('');
+  $('#liveN').textContent = ''; liveOverlay(d, f, pk);
 }
 function drawZones() {
   const Z = M.zones.zones;
