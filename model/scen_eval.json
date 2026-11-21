@@ -1,0 +1,31 @@
+{
+ "test_event_days": 16,
+ "train_dome_days": 55,
+ "train_outdoor_days": 9,
+ "band_coverage_9_22": 0.571,
+ "peak_mae_mid": 665.2,
+ "busy70": {
+  "actual_days": 13,
+  "warned_days": 16,
+  "hit": 13,
+  "false_alarm": 3,
+  "median_lead_h": 0.0,
+  "lead_ge0_share": 0.538
+ },
+ "full90": {
+  "actual_days": 9,
+  "warned_days": 15,
+  "hit": 9,
+  "false_alarm": 6,
+  "median_lead_h": -1.0,
+  "lead_ge0_share": 0.444
+ },
+ "over": {
+  "actual_days": 8,
+  "warned_days": 15,
+  "hit": 8,
+  "false_alarm": 7,
+  "median_lead_h": -2.0,
+  "lead_ge0_share": 0.375
+ }
+}

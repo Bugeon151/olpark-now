@@ -1,0 +1,47 @@
+{
+ "test_event_days": 16,
+ "quantile_gbm": {
+  "band_coverage_9_22": 0.165,
+  "peak_mae_mid": 835.5,
+  "busy70": {
+   "actual_days": 13,
+   "warned_days": 13,
+   "hit": 10,
+   "false_alarm": 3
+  },
+  "full90": {
+   "actual_days": 9,
+   "warned_days": 5,
+   "hit": 3,
+   "false_alarm": 2
+  },
+  "over": {
+   "actual_days": 8,
+   "warned_days": 0,
+   "hit": 0,
+   "false_alarm": 0
+  }
+ },
+ "scenario": {
+  "band_coverage_9_22": 0.518,
+  "peak_mae_mid": 767.3,
+  "busy70": {
+   "actual_days": 13,
+   "warned_days": 14,
+   "hit": 11,
+   "false_alarm": 3
+  },
+  "full90": {
+   "actual_days": 9,
+   "warned_days": 13,
+   "hit": 7,
+   "false_alarm": 6
+  },
+  "over": {
+   "actual_days": 8,
+   "warned_days": 13,
+   "hit": 6,
+   "false_alarm": 7
+  }
+ }
+}

@@ -18,7 +18,7 @@ def test_holdout_and_cv_table():
     has(f"{ho['improve_ci95_vs_persist'][0]}~{ho['improve_ci95_vs_persist'][2]}대", f"{ho['improve_ci95_vs_profile'][0]}~{ho['improve_ci95_vs_profile'][2]}대")
     has(f"재현율 {ho['busy70_nowcast']['recall']}·정밀도 {ho['busy70_nowcast']['precision']}", f"({ho['busy70_persist']['recall']}·{ho['busy70_persist']['precision']})")
     has(f"재현율 {ho['full90_nowcast_q80']['recall']}·정밀도 {ho['full90_nowcast_q80']['precision']}")
-    red = 1 - ho['mae_event_evening']['nowcast'] / ho['mae_event_evening']['persist']; has(f'{round(100 * red)}% 작았고')
+    red = 1 - ho['mae_event_evening']['nowcast'] / ho['mae_event_evening']['persist']; has(f'보다 {round(100 * red)}%, 가장 강한 기준')
     has(f"평가 시점은 월 교차검증 {c(cv['n_event_evening'])}개, 홀드아웃 {ho['n_event_evening']}개")
 
 def test_data_facts():
@@ -53,3 +53,14 @@ def test_live_model_holdout():
     L = json.load(open(ROOT / 'model/live_eval.json'))['holdout_live_model']
     has(f"홀드아웃 MAE {f1(L['nowcast_live'])}대, MAPE {f1(L['mape_nowcast_live'])}%")
     assert L['nowcast_live'] < L['persist']
+
+def test_strong_baseline_and_dayahead():
+    ho, cv = M25['holdout_q4'], M25['month_cv']; S = json.load(open(ROOT / 'model/scen_eval.json'))
+    k = 'event_shape_persist'
+    has(f"'{f1(cv['mae_event_evening'][k])}', '{f1(ho['mae_event_evening'][k])}', '{f1(ho['mape_event_evening'][k])}%'")
+    has(f"({f1(ho['mae_event_evening'][k])}대)보다도 {round(100 * (1 - ho['mae_event_evening']['nowcast'] / ho['mae_event_evening'][k]))}% 작았습니다")
+    has(f"가장 강한 기준모델 대비 {ho['improve_ci95_vs_event_shape'][0]}~{ho['improve_ci95_vs_event_shape'][2]}대")
+    assert ho['improve_ci95_vs_event_shape'][0] > 0 and cv['improve_ci95_vs_event_shape'][0] > 0
+    has(f"공연일 {S['test_event_days']}일에 적용", f"({S['busy70']['actual_days']}·{S['full90']['actual_days']}·{S['over']['actual_days']}일)",
+        f"(오경보 {S['busy70']['false_alarm']}·{S['full90']['false_alarm']}·{S['over']['false_alarm']}일)", f"비율은 {round(100 * S['band_coverage_9_22'])}%", f"오차는 {c(S['peak_mae_mid'])}대")
+    for k2 in ('busy70', 'full90', 'over'): assert S[k2]['hit'] == S[k2]['actual_days']

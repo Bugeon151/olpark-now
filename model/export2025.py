@@ -30,6 +30,12 @@ order = sorted(pk, key=pk.get)
 q = lambda f: order[min(len(order) - 1, int(round(f * (len(order) - 1))))]
 EX = np.array(list(ex.values()))  # 시각별 분위수(특정 하루의 다른 행사 영향이 곡선 전체를 끌지 않도록)
 scen = {k: [max(0.0, round(float(x))) for x in np.percentile(EX, f * 100, axis=0)] for k, f in (('low', .1), ('mid', .5), ('high', .9))}
+outd = {}
+for d in allidx:
+    ss = [s for v, s in M.by_day.get(days[d].isoformat(), []) if v == '야외']
+    if ss: outd[d] = min(ss)
+EXO = np.array([[float(OCC[d, s + r] - Pm[M.month[d], M.dtype[d], s + r]) if 0 <= s + r < 24 else 0.0 for r in range(-10, 6)] for d, s in outd.items()])
+scen_out = {k: [max(0.0, round(float(x))) for x in np.percentile(EXO, f * 100, axis=0)] for k, f in (('low', .1), ('mid', .5), ('high', .9))}
 dep_rel = []
 for d, s in dome.items():
     y = [DEP[d, s + r] - 0 for r in range(6) if s + r < 24]
@@ -50,7 +56,7 @@ for d in cand:
     replay[days[d].isoformat()] = {
         'actual': OCC[d].round().tolist(), 'profile': Pm[M.month[d], M.dtype[d]].round().tolist(),
         'events': [[v, s] for v, s in M.by_day.get(days[d].isoformat(), [])],
-        'nowcast': {int(h0): {int(t): round(float(g)) for (_, t, k, y, pr, pe, sn, g, qq, pre) in r if int(t) - int(k) == h0} for h0 in M.ORIG}}
+        'nowcast': {int(h0): {int(t): round(float(g)) for (_, t, k, y, pr, pe, sn, g, qq, pre, es) in r if int(t) - int(k) == h0} for h0 in M.ORIG}}
 
 out = json.load(open(ROOT / 'demo/model.json'))
 out['m2024'] = {k: out[k] for k in ('metrics', 'replay', 'profile', 'dome_excess_scenarios_rel_start_-6_to_+5') if k in out}
@@ -58,9 +64,10 @@ out.update({
     'source_year': 2025, 'cap': CAP,
     'profile_m': {str(m): {k: PP[m][k][0].round().tolist() for k in PP[m]} for m in range(1, 13)},
     'profile_m_days_window': {str(m): {k: [PP[m][k][1], PP[m][k][2]] for k in PP[m]} for m in range(1, 13)},
-    'dome_excess_scenarios_rel_start_-6_to_+5': scen, 'scen_from': -10, 'dome_days': len(dome), 'dome_peak_excess_p10_p50_p90_max': [round(pk[q(.1)]), round(pk[q(.5)]), round(pk[q(.9)]), round(max(pk.values()))],
+    'dome_excess_scenarios_rel_start_-6_to_+5': scen, 'scen_from': -10, 'outdoor_excess_scenarios': scen_out, 'outdoor_days': len(outd), 'dome_days': len(dome), 'dome_peak_excess_p10_p50_p90_max': [round(pk[q(.1)]), round(pk[q(.5)]), round(pk[q(.9)]), round(max(pk.values()))],
     'dep_peak_rel_counts': dep_rel_counts, 'annual': {'valid_days': len(allidx), 'busy_hours': busy_h, 'full_hours': full_h, 'busy_days': busy_days, 'full_days': full_days},
     'metrics2025': met, 'replay': replay,
+    'scen_eval': json.load(open(P / 'scen_eval.json')),
 })
 json.dump(out, open(ROOT / 'demo/model.json', 'w'), ensure_ascii=False, separators=(',', ':'))
 print(json.dumps({k: out[k] for k in ('dome_days', 'dome_peak_excess_p10_p50_p90_max', 'dep_peak_rel_counts', 'annual')}, ensure_ascii=False), list(replay))

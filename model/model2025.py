@@ -107,6 +107,10 @@ def evaluate(test_days, train_days):
     mq = HistGradientBoostingRegressor(loss='quantile', quantile=0.8, **GB).fit(Xt, yt - Xt[:, 3])
     Xp = np.array([prow(i, h, P) for i in train_days for h in range(24)]); yp = OCC[train_days].reshape(-1)
     mp = HistGradientBoostingRegressor(**GB).fit(Xp, yp)
+    EVP = np.zeros((3, 24))  # 공연일 평균 곡선(요일유형별) — '현재값 + 공연일 평균 변화' 기준모델
+    for ty in range(3):
+        idx = [i for i in train_days if ev_day[i] and dtype[i] == ty] or [i for i in train_days if ev_day[i]]
+        EVP[ty] = OCC[idx].mean(0)
     out = []
     for d in test_days:
         Re = nrows(d, P); Xe = np.array([r[0] for r in Re])
@@ -114,13 +118,13 @@ def evaluate(test_days, train_days):
         pre = mp.predict(np.array([prow(d, h, P) for h in range(24)]))
         for (f, y, dd, t, k), gg, qq in zip(Re, g, q):
             sn = OCC[d - 7, t] if d >= 7 and VALID[d - 7] else np.nan
-            out.append((dd, t, k, y, P[month[d], dtype[d], t], f[3], sn, gg, qq, pre[t]))
+            out.append((dd, t, k, y, P[month[d], dtype[d], t], f[3], sn, gg, qq, pre[t], f[3] + EVP[dtype[d], t] - EVP[dtype[d], t - k]))
     return np.array(out)
 
 def summarize(res, name):
     d, t, k, y = res[:, 0].astype(int), res[:, 2 - 1].astype(int), res[:, 2], res[:, 3]
     evm = ev_day[d] & (t >= 15) & (t <= 22)
-    cols = {'profile': 4, 'persist': 5, 'seasonal_naive': 6, 'nowcast': 7, 'nowcast_q80': 8, 'pre_event_gbm': 9}
+    cols = {'profile': 4, 'persist': 5, 'seasonal_naive': 6, 'nowcast': 7, 'nowcast_q80': 8, 'pre_event_gbm': 9, 'event_shape_persist': 10}
     o = {'n': int(len(y)), 'n_event_evening': int(evm.sum()), 'mae_all': {}, 'mae_event_evening': {}, 'mape_event_evening': {}}
     for c, i in cols.items():
         p = res[:, i]; ok = ~np.isnan(p)
@@ -129,7 +133,7 @@ def summarize(res, name):
         o['mape_event_evening'][c] = round(float(100 * np.mean(np.abs(p[evm & ok] - y[evm & ok]) / np.maximum(y[evm & ok], 1))), 1)
     for thr, nm in ((0.7, 'busy70'), (0.9, 'full90')):
         T = y >= thr * CAP
-        for c in ('persist', 'nowcast', 'nowcast_q80'):
+        for c in ('persist', 'event_shape_persist', 'nowcast', 'nowcast_q80'):
             p = res[:, cols[c]] >= thr * CAP
             tp, fp = int((p & T).sum()), int((p & ~T).sum())
             o[f'{nm}_{c}'] = {'actual': int(T.sum()), 'recall': round(tp / max(T.sum(), 1), 3), 'precision': round(tp / max(tp + fp, 1), 3)}
@@ -137,10 +141,12 @@ def summarize(res, name):
     rng = np.random.default_rng(0); evd = np.unique(d[evm]); B = []
     for _ in range(2000):
         s = rng.choice(evd, len(evd)); m = np.concatenate([np.where(evm & (d == x))[0] for x in s])
-        B.append([np.abs(res[m, 4] - y[m]).mean() - np.abs(res[m, 7] - y[m]).mean(), np.abs(res[m, 5] - y[m]).mean() - np.abs(res[m, 7] - y[m]).mean()])
+        B.append([np.abs(res[m, 4] - y[m]).mean() - np.abs(res[m, 7] - y[m]).mean(), np.abs(res[m, 5] - y[m]).mean() - np.abs(res[m, 7] - y[m]).mean(),
+                  np.abs(res[m, 10] - y[m]).mean() - np.abs(res[m, 7] - y[m]).mean()])
     B = np.array(B)
     o['improve_ci95_vs_profile'] = [round(float(x), 1) for x in np.percentile(B[:, 0], [2.5, 50, 97.5])]
     o['improve_ci95_vs_persist'] = [round(float(x), 1) for x in np.percentile(B[:, 1], [2.5, 50, 97.5])]
+    o['improve_ci95_vs_event_shape'] = [round(float(x), 1) for x in np.percentile(B[:, 2], [2.5, 50, 97.5])]
     print(name, json.dumps(o, ensure_ascii=False))
     return o
 

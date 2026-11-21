@@ -40,10 +40,10 @@ save(fig, 'g2_dome_excess_exit.png')
 
 # g3) 정확도(홀드아웃)
 ho = J['metrics2025']['holdout_q4']['mae_event_evening']
-names = [('profile', '평균 프로파일'), ('seasonal_naive', '전주 같은 시각'), ('pre_event_gbm', '사전 예측(공연·달력·기상)'), ('persist', '현재값 유지'), ('nowcast', '올팍 나우 나우캐스트')]
-fig, ax = plt.subplots(figsize=(6.0, 2.4))
+names = [('profile', '평균 프로파일'), ('seasonal_naive', '전주 같은 시각'), ('pre_event_gbm', '사전 예측(공연·달력·기상)'), ('persist', '현재값 유지'), ('event_shape_persist', '현재값+공연일 평균 변화'), ('nowcast', '올팍 나우 나우캐스트')]
+fig, ax = plt.subplots(figsize=(6.0, 2.7))
 v = [ho[k] for k, _ in names]
-ax.barh([n for _, n in names], v, color=[MUT] * 4 + [O], height=.55)
+ax.barh([n for _, n in names], v, color=[MUT] * 5 + [O], height=.55)
 for i, val in enumerate(v): ax.text(val + 10, i, f'{val:.1f}대', va='center', fontsize=8.5)
 ax.invert_yaxis(); ax.set_xlim(0, 1000); ax.set_xlabel('10~12월 홀드아웃 공연일 15~22시, 1~3시간 뒤 예측 MAE(대)')
 save(fig, 'g3_mae_2025.png')
