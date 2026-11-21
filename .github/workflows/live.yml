@@ -1,0 +1,33 @@
+name: live-parking
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: live-parking
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: live-data
+      - name: fetch
+        run: |
+          TS=$(TZ=Asia/Seoul date '+%Y-%m-%dT%H:%M:%S%z')
+          D=$(TZ=Asia/Seoul date '+%Y-%m-%d')
+          BODY=$(curl -s -m 20 'https://www.ksponco.or.kr/online/main/parkingorsApi.do?apiKey=PARKING21803504' || true)
+          N=$(echo "$BODY" | grep -o '"parking_sum":[0-9]*' | grep -o '[0-9]*$' || true)
+          echo "$TS,${N:-}" >> data/live/$D.csv
+          tail -1 data/live/$D.csv
+      - name: commit
+        run: |
+          git config user.name "Bugeon Park"
+          git config user.email "bagdoeon827@gmail.com"
+          git add data/live
+          git commit -q -m "live $(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M')" || exit 0
+          for i in 1 2 3; do git pull -q --rebase origin live-data && git push -q origin HEAD:live-data && break; sleep 3; done
