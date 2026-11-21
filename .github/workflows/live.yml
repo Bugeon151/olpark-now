@@ -1,7 +1,7 @@
 name: live-parking
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 permissions:
   contents: write
@@ -11,16 +11,16 @@ concurrency:
 jobs:
   collect:
     runs-on: ubuntu-latest
-    timeout-minutes: 65
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
         with:
           ref: live-data
-      - name: collect every 5 minutes for ~1 hour
+      - name: collect every 5 minutes for ~6 hours
         run: |
           git config user.name "Bugeon Park"
           git config user.email "bagdoeon827@gmail.com"
-          END=$(( $(date +%s) + 3480 ))
+          END=$(( $(date +%s) + 20880 ))
           while :; do
             TS=$(TZ=Asia/Seoul date '+%Y-%m-%dT%H:%M:%S%z'); D=$(TZ=Asia/Seoul date '+%Y-%m-%d')
             BODY=$(curl -s -m 20 'https://www.ksponco.or.kr/online/main/parkingorsApi.do?apiKey=PARKING21803504' || true)
