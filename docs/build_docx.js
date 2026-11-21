@@ -170,7 +170,7 @@ const detail = [
   p([new TextRun({ text: '출처: 공공데이터포털(data.go.kr)·문화공공데이터광장 한국체육산업개발주식회사 개방 데이터, 한국체육산업개발 홈페이지(ksponco.or.kr) 공연/행사 일정·공연장 안내·주차 안내·주차장 예상 이용률 서비스(2026-11-21 열람), Open-Meteo Historical Weather API.', size: 17, color: '52514E' })], { spacing: { before: 200 } }),
 ];
 
-const doc = new Document({
+const doc = new Document({ creator: '박부건', lastModifiedBy: '박부건', title: '올팍 나우 기획서',
   styles: {
     default: { document: { run: { font: F, size: 21 } } },
     paragraphStyles: [
