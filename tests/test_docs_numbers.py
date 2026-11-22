@@ -64,3 +64,12 @@ def test_strong_baseline_and_dayahead():
     has(f"공연일 {S['test_event_days']}일에 적용", f"({S['busy70']['actual_days']}·{S['full90']['actual_days']}·{S['over']['actual_days']}일)",
         f"(오경보 {S['busy70']['false_alarm']}·{S['full90']['false_alarm']}·{S['over']['false_alarm']}일)", f"비율은 {round(100 * S['band_coverage_9_22'])}%", f"오차도 {c(S['peak_mae_mid'])}대")
     for k2 in ('busy70', 'full90', 'over'): assert S[k2]['hit'] == S[k2]['actual_days']
+
+def test_field_validation_1122():
+    F = json.load(open(ROOT / 'model/live_eval.json'))['field']
+    raw = [l.split(',') for l in open(ROOT / 'data/raw/live/2026-11-22.csv') if l.strip()]
+    assert F['date'] == '2026-11-22' and F['samples'] >= len([r for r in raw if r[1].strip()])
+    has(f"5분 간격으로 {F['samples']}회", f"기준선 {c(F['offset_night'])}대", f"예측 {c(F['peak_pre_mid'][1])}대({F['peak_pre_mid'][0]}시)·실측 {c(F['peak_actual_adj'][1])}대({F['peak_actual_adj'][0]}시)로 {c(abs(F['peak_actual_adj'][1] - F['peak_pre_mid'][1]))}대 차이",
+        f"{F['n_evening']}개 시점의 평균 오차는 {f1(F['mae_evening']['nowcast'])}대", f"현재값 유지({f1(F['mae_evening']['persist'])}대)보다 {round(100 * (1 - F['mae_evening']['nowcast'] / F['mae_evening']['persist']))}% 작았습니다",
+        f"전날 중간 예측({f1(F['mae_evening']['pre'])}대)", f"하루 최대 주차 대수 오차는 {c(abs(F['peak_actual_adj'][1] - F['peak_pre_mid'][1]))}대")
+    assert F['pre_band_coverage_9_22'] == 1.0 and F['first_cross']['busy70'] == {'actual': 16, 'pre_high': 12}

@@ -76,3 +76,18 @@ arr(49, 23.6, 49, 21.4); arr(49, 12.6, 49, 10.4)
 for y in (28, 17, 6): arr(62.2, 6, 71.8, y)
 save(fig, 'g7_flow.png')
 print('ok')
+
+# g8) 현장 검증 2026-11-22(일) KSPO DOME 17시 공연 — 실시간 API(새벽 기준선 보정) vs 전날 범위·14시 나우캐스트
+LV = json.load(open(ROOT / 'model/live_eval.json'))['field']
+act = np.array([np.nan if v is None else v for v in LV['actual_adj']], float); band = np.array(LV['pre_band_adj'], float); off = LV['offset_night']
+fig, ax = plt.subplots(figsize=(7.2, 2.7)); hs = np.arange(24)
+ax.fill_between(hs, band[:, 0], band[:, 1], color=B, alpha=.18, lw=0, label='전날 예측 범위(10~90%)')
+ax.plot(hs, LV['pre_mid_adj'], color=B, lw=1.8, label='전날 예측(중간)')
+ax.plot(hs, act, color=O, lw=2.2, marker='o', ms=3.5, label='실측(실시간 API, 기준선 보정)')
+nc = LV['nowcast_raw_by_h0']['14']; xs = [14] + [int(k) for k in nc]; ys = [act[14]] + [v - off for v in nc.values()]
+ax.plot(xs, ys, color='#52514e', lw=1.6, ls='--', marker='s', ms=4, label='14시 기준 나우캐스트')
+for thr, c in ((0.7, WARN), (0.9, CRIT)): ax.axhline(thr * CAP, ls='--', lw=.8, color=c)
+ax.axvline(17, color='#8a8984', lw=.8); ax.text(17.2, 2350, '공연 17:00', fontsize=8)
+ax.set_xlim(0, 23); ax.set_ylim(0, 2700); ax.set_xlabel('시각'); ax.set_ylabel('주차 차량(대)'); ax.legend(frameon=False, fontsize=7.2, loc='upper left')
+save(fig, 'g8_field_1122.png')
+print('g8 ok')

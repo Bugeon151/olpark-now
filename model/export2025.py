@@ -70,6 +70,7 @@ out.update({
     'dep_peak_rel_counts': dep_rel_counts, 'annual': {'valid_days': len(allidx), 'busy_hours': busy_h, 'full_hours': full_h, 'busy_days': busy_days, 'full_days': full_days},
     'metrics2025': met, 'replay': replay,
     'scen_eval': json.load(open(P / 'scen_eval.json')),
+    'live_field': {k: v for k, v in json.load(open(P / 'live_eval.json')).get('field', {}).items() if k in ('date', 'samples', 'offset_night', 'mae_evening', 'n_evening', 'pre_band_coverage_9_22', 'peak_actual_adj', 'peak_pre_mid', 'first_cross')},
     'venue_excess_scenarios': {v: {k: [round(float(x)) for x in sc_v[q]] for k, q in (('low', 10), ('mid', 50), ('high', 90))}
                                for v in ('올림픽홀', '핸드볼경기장', '우리금융아트홀') for sc_v, n in [SE.venue_scen(allidx, v)] if sc_v is not None},
 })

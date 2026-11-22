@@ -51,10 +51,10 @@ async def main():
             '초과 주차 517~1,924대(68일, 10~90%) → 고정 예측의 한계 · 출차는 공연 시작 2~3시간 뒤 몰림(68일 중 56일)'), wait_until='load')
         await r.shot('s2', 7)
         # 3 운영 대시보드
-        await pg.goto(DEMO); await pg.wait_for_timeout(500); await pg.evaluate('window.scrollTo(0,0)')
+        await pg.goto(DEMO); await pg.wait_for_timeout(500); await pg.select_option('#date', '2026-11-22'); await pg.wait_for_timeout(2500); await pg.evaluate('window.scrollTo(0,0)')
         await r.cap('운영 대시보드: 날짜를 고르면 그날 공연과 함께<br>혼잡·만차 위험 시각, 출차 인력 배치 시각, 수용 초과 대수를 바로 보여 줍니다')
         await r.shot('s3', 7)
-        await r.to('#c0', 150); await r.cap('예상 주차 차량 수(파란 선)와 범위(하늘색) — 2025년 KSPO DOME 공연일 68일 관측 분포로 만든 범위')
+        await r.to('#c0', 150); await r.cap('11/22 로이킴 공연일: 전날 예측(파란 선·범위)과 실시간 API 실측(주황) — 범위가 실측을 모두 담았고 최대 오차 47대')
         await r.shot('s3', 6)
         await r.to('#opsTbl', 110); await r.cap('시간대별 경보와 권장 조치 — 사전 안내, 구역 유도 표지, 진입 통제 준비, 출차 유도 인력')
         await r.shot('s3', 6)
